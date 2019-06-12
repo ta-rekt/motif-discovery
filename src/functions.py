@@ -181,7 +181,7 @@ def isomorphicExtensions(f, H, G): #, C, h)
 
 # finds symmetry-breaking conditions for H given HE and Aut(H)
 # HE: ?
-# Aut(H): 
+# Aut(H): what is life
 def symmetryConditions(HE, Aut)
 
 
