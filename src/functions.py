@@ -130,10 +130,13 @@ def canSupport(h, g, H, G):
 # H: network
 # L: a list of nodes that should be sorted
 def sortDegrees(H, L):
+    # print('##### SORT DEGREES CALL #####')
     sortedDegreeH = H.degree()
     sortedDegreeH = [(i, sortedDegreeH(i)) for i in L]
     sortedDegreeH = np.array(sortedDegreeH, dtype=[('node', 'i4'), ('degree', 'i4')])
     sortedDegreeH = np.sort(sortedDegreeH, order='degree')
+    # print('sorted degrees: ', end='')
+    # print(sortedDegreeH)
     return sortedDegreeH
 
 
@@ -181,8 +184,8 @@ def mostConstrainedNode(D, H):
 
     # neighbors of D exclusively in H with the number of neighbors in D
     neighborsD = neighborsD.difference(set(D))
-    print('neighbors of D: ', end='')
-    print(neighborsD)
+    # print('neighbors of D: ', end='')
+    # print(neighborsD)
 
     for n in neighborsD:
         count = 0
@@ -194,8 +197,8 @@ def mostConstrainedNode(D, H):
         candidates = np.concatenate((candidates, c))
 
     # select the candidates with the most neighbors in D
-    print('candidates: ', end='')
-    print(candidates)
+    # print('candidates: ', end='')
+    # print(candidates)
 
     maxx = max(candidates['attribute'])
     indices = [key for key, val in candidates if val == maxx]
@@ -206,13 +209,13 @@ def mostConstrainedNode(D, H):
 
     else:
         # select those with highest degree
-        print('nodes with most neighbors in D, degrees: ',end='')
-        print(candidates)
+        # print('nodes with most neighbors in D, degrees: ',end='')
+        # print(candidates)
 
         maxx = max(candidates['attribute'])
         ind = [key for key, val in candidates if val == maxx]
-        print('nodes of largest degree: ', end='')
-        print(ind)
+        # print('nodes of largest degree: ', end='')
+        # print(ind)
 
         if (len(ind) == 1):
             return ind[0]
@@ -235,7 +238,8 @@ def mostConstrainedNode(D, H):
 def findSubgraphInstances(H, G):
     print('##### FIND SUBGRAPH INSTANCES #####')
 
-    instances = np.array([], dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+    # instances = np.array([], dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+    instances = []
 
     # sort nodes of G by degree
     sortedDegreeG = sortDegrees(G, G.nodes())
@@ -249,8 +253,12 @@ def findSubgraphInstances(H, G):
                 f.extend(isomorphicExtensions(f, H, G))
 
                 if(len(f.getMap()) != 0):
-                    instances = np.concatenate((instances, f.getMap()))
+                    # instances = np.concatenate((instances, f.getMap()))
+                    instances.append([f.getRange()])
         G.remove_node(g)
+
+    print('subgraph instances: ',end='')
+    print(instances)
 
     return instances
 
@@ -276,7 +284,7 @@ def isomorphicExtensions(f, H, G): #, C, h)
         return f
 
     m = mostConstrainedNode(D, H)
-    print('domain extension: ', end='')
+    print('domain extension (m): ', end='')
     print(m)
 
     # list of neighbors of f(D)
@@ -293,23 +301,26 @@ def isomorphicExtensions(f, H, G): #, C, h)
 
     print('neighbors of partial range: ',end='')
     print(neighborsR)
+    print('neighbors of partial domain: ',end='')
+    print(neighborsD)
 
     # check for induced isomorphism
-    i = 0
-    while i < len(neighborsR):
-        sig = True
-        n = list(neighborsR)[i]
-        print('try range extension: ',end='')
+    for n in neighborsR:
+
+        print('try range extension (n): ',end='')
         print(n)
 
-        for d in neighborsD:
-            if (((d in H[m]) & (f.applyMap(d) not in G[n])) | ((d not in H[m]) & (f.applyMap(d) in G[n]))):
-                sig = False
-                break
+        numNeighbMinD = len(set(H[m]).intersection(set(f.getDomain())))
+        numNeighbNinR = len(set(G[n]).intersection(set(f.getRange())))
 
-        if(not sig):
+        print('number of neighbors of m in D: ', end='')
+        print(numNeighbMinD)
+        print('number of neighbors of n in R: ', end='')
+        print(numNeighbNinR)
+
+        if(numNeighbMinD != numNeighbNinR):
             print('range extension not valid')
-            i += 1
+
         else:
             print('range extension valid')
             fp = f
@@ -318,8 +329,9 @@ def isomorphicExtensions(f, H, G): #, C, h)
             print(newNode)
 
             fp.extend([newNode])
-
             np.append(isomorphisms, isomorphicExtensions(fp, H, G))
+
+    print('EXIT ISOMORPHIC EXTENSIONS')
 
     return isomorphisms
 
