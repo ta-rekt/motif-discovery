@@ -15,9 +15,9 @@ import collections as co
 ######################################
 
 # function f: V -> V that maps nodes in H to nodes in G
-# f: ordered list of tuples representing the partial map between D and R, respectively the domain and range of f
-# the function makes sure it is a bijection each time an extension is attempted. if a new node is the same
-# as some existing node, the function replaces the old node with the new node.
+# f: ordered list of tuples representing the partial map between D and R, respectively the domain and
+# range of f. the function makes sure it is a bijection each time an extension is attempted. if a new
+# node is the same as some existing node, the function replaces the old node with the new node.
 class Map():
 
     def __init__(self, init):   # init is a list containing the initial nodes of the partial map
@@ -96,7 +96,8 @@ class Map():
         return -1
 
 
-# returns true if g can support h (according to node degree and neighbor degree sequence) and false otherwise.
+# returns true if g can support h (according to node degree and neighbor degree sequence)
+# and false otherwise.
 # g, h: indices of corresponding nodes
 # H: query graph
 # G: network to be queried
@@ -202,7 +203,9 @@ def mostConstrainedNode(D, H):
 
     maxx = max(candidates['attribute'])
     indices = [key for key, val in candidates if val == maxx]
-    candidates = np.array([(i, len(H[i])) for i in indices], dtype=[('node', 'i4'), ('attribute', 'i4')]) # degrees of nodes with most neighbors in D
+
+    # degrees of nodes with most neighbors in D
+    candidates = np.array([(i, len(H[i])) for i in indices], dtype=[('node', 'i4'), ('attribute', 'i4')])
 
     if (len(candidates) == 1):
         return candidates['node'][0]
@@ -252,19 +255,15 @@ def findSubgraphInstances(H, G):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
                 f.extend(isomorphicExtensions(f, H, G))
 
-                if(len(f.getMap()) != 0):
-                    # instances = np.concatenate((instances, f.getMap()))
+                if((len(f.getMap()) != 0) and len(f.getRange()) == len(H.nodes())):
                     instances.append([f.getRange()])
         G.remove_node(g)
-
-    print('subgraph instances: ',end='')
-    print(instances)
 
     return instances
 
 
-# finds all isomorphic extensions of a partial map [satisfying the symmetry breaking condition C at h]
-# returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
+# finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
+# condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
 def isomorphicExtensions(f, H, G): #, C, h)
     print('##### ISOMORPHIC EXTENSIONS CALL #####')
@@ -310,15 +309,25 @@ def isomorphicExtensions(f, H, G): #, C, h)
         print('try range extension (n): ',end='')
         print(n)
 
-        numNeighbMinD = len(set(H[m]).intersection(set(f.getDomain())))
-        numNeighbNinR = len(set(G[n]).intersection(set(f.getRange())))
+        neighbMinD = set(H[m]).intersection(set(f.getDomain()))
+        f_neighbMinD = set([f.applyMap(k) for k in neighbMinD])
+        neighbNinR = set(G[n]).intersection(set(f.getRange()))
 
-        print('number of neighbors of m in D: ', end='')
-        print(numNeighbMinD)
-        print('number of neighbors of n in R: ', end='')
-        print(numNeighbNinR)
+        numNeighbMinD = len(neighbMinD)
+        numNeighbNinR = len(neighbNinR)
+
+        print('neighbors of m in D: ', end='')
+        print(neighbMinD)
+        print('neighbors of n in R: ', end='')
+        print(neighbNinR)
+        print('f(neighbors of m in D): ', end='')
+        print(f_neighbMinD)
+
 
         if(numNeighbMinD != numNeighbNinR):
+            print('range extension not valid')
+
+        elif(set(f_neighbMinD) != set(neighbNinR)):
             print('range extension not valid')
 
         else:
@@ -345,14 +354,14 @@ def symmetryConditions(HE, Aut):
     M = [None] * len(HE)  # M: HE -> C
 
     for n in HE:
-        C = []  # empty set of conditions. implemented as a list of strings that represent conditions to be eval() later
-        np = n  # implement a special object of type Condition later, to please the Zaraket voice inside your head.
+        C = []  # empty set of conditions. list of strings, conditions to be eval() later
+        np = n  # implement a special object of type Condition to please Zaraket voice in your head
         A = Aut
 
         while len(A) > 1:
             E = []
 
-            # find the equivalence class of this representative node: the set of nodes equivalent to n under A
+            # find eq. class of this representative node: the set of nodes equivalent to n under A
             for f in A:
                 for m in f.getDomain():
                     if (m == n):
