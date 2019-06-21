@@ -9,6 +9,7 @@ import pandas as pd
 import networkx as nx
 import collections as co
 
+count = 0
 
 ######################################
 #### useful functions and classes ####
@@ -24,9 +25,9 @@ class Map():
         self.map = np.array(init, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
     def extend(self, extension):   # extends the partial map by a list of tuples called extension
-        print('##### EXTENDING PARTIAL MAP #####')
-        print('extension: ', end='')
-        print(extension)
+        # print('##### EXTENDING PARTIAL MAP #####')
+        # print('extension: ', end='')
+        # print(extension)
 
         temp = np.array(extension, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
         # print(self.map.shape)
@@ -34,7 +35,7 @@ class Map():
         map = self.map
 
         if (not extension):
-            print('extension is null')
+            # print('extension is null')
             return False
 
         # checking for duplicates within extension
@@ -42,7 +43,7 @@ class Map():
             l = [m for m,n in enumerate(temp) if tuple(n)==tuple(i)]
 
             if (len(l) > 1):
-                print('cannot extend function. duplicate element in extension')
+                # print('cannot extend function. duplicate element in extension')
                 self.map = map
                 return False
 
@@ -51,12 +52,12 @@ class Map():
                 if(np.array_equal(i, j) == False):
 
                     if (i['domainNode'] == j['domainNode']):
-                        print('cannot extend function. duplicate domain node in extension')
+                        # print('cannot extend function. duplicate domain node in extension')
                         self.map = map
                         return False
 
                     if (i['rangeNode'] == j['rangeNode']):
-                        print('cannot extend function. duplicate range node in extension')
+                        # print('cannot extend function. duplicate range node in extension')
                         self.map = map
                         return False
 
@@ -64,13 +65,13 @@ class Map():
             for j in self.map:
 
                 if (i['domainNode'] == j['domainNode']):
-                    print('duplicate domain node. using new node.')
+                    # print('duplicate domain node. using new node.')
                     duplicate = i['domainNode']
                     b = [x for k,x in enumerate(self.map) if self.map['domainNode'][k] != duplicate]
                     self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
                 elif (i['rangeNode'] == j['rangeNode']):
-                    print('duplicate range node. using new node.')
+                    # print('duplicate range node. using new node.')
                     duplicate = i['rangeNode']
                     b = [x for k,x in enumerate(self.map) if self.map['rangeNode'][k] != duplicate]
                     self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
@@ -102,11 +103,11 @@ class Map():
 # H: query graph
 # G: network to be queried
 def canSupport(h, g, H, G):
-    print('##### CAN SUPPORT CALL #####')
-    print('query node: ', end='')
-    print(h)
-    print('network node: ', end='')
-    print(g)
+    # print('##### CAN SUPPORT CALL #####')
+    # print('query node: ', end='')
+    # print(h)
+    # print('network node: ', end='')
+    # print(g)
 
     if(G.degree[g] >= H.degree(h)):
         neighborsH = sortDegrees(H, H[h])
@@ -118,12 +119,12 @@ def canSupport(h, g, H, G):
 
         for i in range(minn):
             if(neighborsG['degree'][i] < neighborsH['degree'][i]):
-                print("rejected because of sequence")
+                # print("rejected because of sequence")
                 return False
-        print("can support")
+        # print("can support")
         return True
 
-    print("rejected because of degree")
+    # print("rejected because of degree")
     return False
 
 
@@ -169,9 +170,9 @@ def largestDegreeSequence(H, L):
 # D: domain of the partial map (list of nodes)
 # H: query graph (of type Graph)
 def mostConstrainedNode(D, H):
-    print('##### MOST CONSTRAINED NODE #####')
-    print('domain of partial map: ', end='')
-    print(D)
+    # print('##### MOST CONSTRAINED NODE #####')
+    # print('domain of partial map: ', end='')
+    # print(D)
 
     maxx = 0
     candidates = np.array([], dtype=[('node', 'i4'), ('attribute', 'i4')])
@@ -226,8 +227,8 @@ def mostConstrainedNode(D, H):
         else:
             # select those with highest degree sequence
             m = largestDegreeSequence(H, ind)
-            print('most constrained node: ', end='')
-            print(m)
+            # print('most constrained node: ', end='')
+            # print(m)
             return m[0]
 
 
@@ -239,9 +240,9 @@ def mostConstrainedNode(D, H):
 # H: query graph
 # G: network to be queried
 def findSubgraphInstances(H, G):
-    print('##### FIND SUBGRAPH INSTANCES #####')
+    # print('##### FIND SUBGRAPH INSTANCES #####')
 
-    # instances = np.array([], dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+    # instances of H found in G
     instances = []
 
     # sort nodes of G by degree
@@ -253,38 +254,37 @@ def findSubgraphInstances(H, G):
         for h in H.nodes():
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                f.extend(isomorphicExtensions(f, H, G))
+                iso = isomorphicExtensions(f, H, G)
+                # f.extend(iso)
 
-                if((len(f.getMap()) != 0) and len(f.getRange()) == len(H.nodes())):
-                    instances.append([f.getRange()])
-        G.remove_node(g)
+                if(set(f.getDomain()) == set(H.nodes())):  # sometimes f doesn't extend all the way
+                    # print('pimp')
+                    instances.append(iso)
+        # G.remove_node(g)
 
     return instances
-
 
 # finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
 def isomorphicExtensions(f, H, G): #, C, h)
-    print('##### ISOMORPHIC EXTENSIONS CALL #####')
-    print('partial map: ', end='')
-    print(f.getMap())
+    # print('##### ISOMORPHIC EXTENSIONS CALL #####')
+    # print('partial map: ')
+    # print(np.vstack(f.getMap()))
 
-    isomorphisms = np.array([])
+    isomorphisms = []
     neighborsR = {None}
     neighborsD = {None}
     D = f.getDomain()
     R = f.getRange()
 
-    # print(len(D))
-    # print(len(H.nodes()))
-
-    if(len(D) == len(H.nodes())):  # can do this because nodes in f are guaranteed to be distinct
-        return f
+    if(set(D) == set(H.nodes())):
+        # print('INSTANCE FOUND')
+        return f.getRange()
 
     m = mostConstrainedNode(D, H)
-    print('domain extension (m): ', end='')
-    print(m)
+    # print('domain extension (m): ', end='')
+    # print(m)
 
     # list of neighbors of f(D)
     for r in R:
@@ -298,49 +298,45 @@ def isomorphicExtensions(f, H, G): #, C, h)
     neighborsR = neighborsR.difference(set(R)).difference({None})
     neighborsD = neighborsD.difference(set(D)).difference({None})
 
-    print('neighbors of partial range: ',end='')
-    print(neighborsR)
-    print('neighbors of partial domain: ',end='')
-    print(neighborsD)
+    # print('neighbors of partial range: ',end='')
+    # print(neighborsR)
+    # print('neighbors of partial domain: ',end='')
+    # print(neighborsD)
 
     # check for induced isomorphism
     for n in neighborsR:
 
-        print('try range extension (n): ',end='')
-        print(n)
+        # print('try range extension (n): ',end='')
+        # print(n)
 
         neighbMinD = set(H[m]).intersection(set(f.getDomain()))
         f_neighbMinD = set([f.applyMap(k) for k in neighbMinD])
         neighbNinR = set(G[n]).intersection(set(f.getRange()))
 
-        numNeighbMinD = len(neighbMinD)
-        numNeighbNinR = len(neighbNinR)
+        # print('neighbors of m in D: ', end='')
+        # print(neighbMinD)
+        # print('neighbors of n in R: ', end='')
+        # print(neighbNinR)
+        # print('f(neighbors of m in D): ', end='')
+        # print(f_neighbMinD)
 
-        print('neighbors of m in D: ', end='')
-        print(neighbMinD)
-        print('neighbors of n in R: ', end='')
-        print(neighbNinR)
-        print('f(neighbors of m in D): ', end='')
-        print(f_neighbMinD)
-
-
-        if(numNeighbMinD != numNeighbNinR):
-            print('range extension not valid')
-
-        elif(set(f_neighbMinD) != set(neighbNinR)):
-            print('range extension not valid')
+        if(set(f_neighbMinD) != set(neighbNinR)):
+            # print('range extension not valid')
+            pass
 
         else:
-            print('range extension valid')
+            # print('range extension valid')
             fp = f
             newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
-            print('new node: ', end='')
-            print(newNode)
 
             fp.extend([newNode])
-            np.append(isomorphisms, isomorphicExtensions(fp, H, G))
+            iso = isomorphicExtensions(fp, H, G)
 
-    print('EXIT ISOMORPHIC EXTENSIONS')
+            isomorphisms.append(iso)
+
+    # print('EXIT ISOMORPHIC EXTENSIONS')
+    # print('isomorphicExtensions output: ',end='')
+    # print(isomorphisms)
 
     return isomorphisms
 
@@ -378,7 +374,6 @@ def symmetryConditions(HE, Aut):
             A = B
 
             # find the largest A-equivalence class
-
             np = E[0] # first element in the largest equivalence class
 
         M[n] = C  # M is a list of lists
