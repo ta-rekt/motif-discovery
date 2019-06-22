@@ -254,6 +254,22 @@ def findEquivalenceClasses(aut):
     return eq
 
 
+# returns only functions that are unique in the set maps
+# maps: set of automorphisms returned by findSubgraphInstances, possibly with duplicate maps
+def returnUniqueMaps(maps):
+    t = [tuple(k.getMap()) for k in maps]  # changes the functions to tuples for comparison
+
+    dummy = []
+    to_return = []
+
+    for key, value in enumerate(t):
+        if (value not in dummy):
+            dummy.append(value)
+            to_return.append(maps[key])
+
+    return to_return
+
+
 ###############################################
 #### grochow-kellis motif search algorithm ####
 ###############################################
@@ -279,18 +295,19 @@ def findSubgraphInstances(H, G):
                 iso = isomorphicExtensions(f, H, G)
 
                 if(iso):  # sometimes iso is empty
-                    instances.append(iso)
+                    instances.append(iso)   # instances might contain duplicate maps
 
         # G.remove_node(g)
     instances = [next(iter(k)) for k in instances]  # removes the elements from their sets
+    to_return = returnUniqueMaps(instances)
 
-    return instances
+    return to_return
 
 # finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
 def isomorphicExtensions(f, H, G): #, C, h)
-    print('##### ISOMORPHIC EXTENSIONS CALL #####')
+    # print('##### ISOMORPHIC EXTENSIONS CALL #####')
 
 
     isomorphisms = set()
@@ -300,14 +317,14 @@ def isomorphicExtensions(f, H, G): #, C, h)
     R = f.getRange()
 
     if(set(D) == set(H.nodes())):
-        print('INSTANCE FOUND')
-        print(list(f.getMap()))
+        # print('INSTANCE FOUND')
+        # print(list(f.getMap()))
         f.extend(list(np.sort(f.getMap(), order='domainNode')))
         return {f}
 
     m = mostConstrainedNode(D, H)
-    print('domain extension (m): ', end='')
-    print(m)
+    # print('domain extension (m): ', end='')
+    # print(m)
 
     # list of neighbors of f(D)
     for r in R:
@@ -321,19 +338,19 @@ def isomorphicExtensions(f, H, G): #, C, h)
     neighborsR = neighborsR.difference(set(R)).difference({None})
     neighborsD = neighborsD.difference(set(D)).difference({None})
 
-    print('neighbors of partial range: ',end='')
-    print(neighborsR)
+    # print('neighbors of partial range: ',end='')
+    # print(neighborsR)
     # print('neighbors of partial domain: ',end='')
     # print(neighborsD)
 
     # check for induced isomorphism
     for n in neighborsR:
 
-        print('partial map: ')
-        print(np.vstack(f.getMap()))
-
-        print('try range extension (n): ',end='')
-        print(n)
+        # print('partial map: ')
+        # print(np.vstack(f.getMap()))
+        #
+        # print('try range extension (n): ',end='')
+        # print(n)
 
         neighbMinD = set(H[m]).intersection(set(f.getDomain()))
         f_neighbMinD = set([f.applyMap(k) for k in neighbMinD])
@@ -347,22 +364,19 @@ def isomorphicExtensions(f, H, G): #, C, h)
         # print(f_neighbMinD)
 
         if(set(f_neighbMinD) != set(neighbNinR)):
-            print('range extension not valid')
+            # print('range extension not valid')
             pass
 
         else:
-            print('range extension valid')
+            # print('range extension valid')
             fp = Map(list(f.getMap()))
             newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
             fp.extend([newNode])
-            print('called')
+            # print('called')
             iso = isomorphicExtensions(fp, H, G)
-            print('returned')
+            # print('returned')
             isomorphisms = isomorphisms.union(iso)
-
-            # if(isomorphisms):
-            #     print(next(iter(isomorphisms)).getMap())
 
     # print('EXIT ISOMORPHIC EXTENSIONS')
     # print('isomorphicExtensions output: ',end='')
