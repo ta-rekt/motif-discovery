@@ -232,6 +232,28 @@ def mostConstrainedNode(D, H):
             return m[0]
 
 
+# finds the set of equivalence classes. returns a list; the position
+# of an element in the list corresponds to a node and that element is
+# the equivalence class it belongs to.
+# aut: set of automorphisms. must be a list of objects of type Map.
+def findEquivalenceClasses(aut):
+    eq = []
+
+    for n in aut[0].getDomain():
+        E = {None}
+
+        for f in aut:
+            E = E.union({f.applyMap(n)})
+
+        E = E.difference({None})
+
+        tuple = (E, list(E)[0])
+        if (tuple not in eq):
+            eq.append(tuple)
+
+    return eq
+
+
 ###############################################
 #### grochow-kellis motif search algorithm ####
 ###############################################
@@ -280,7 +302,8 @@ def isomorphicExtensions(f, H, G): #, C, h)
 
     if(set(D) == set(H.nodes())):
         # print('INSTANCE FOUND')
-        return f.getRange()
+        f.extend(list(np.sort(f.getMap(), order='domainNode')))
+        return f.getMap()
 
     m = mostConstrainedNode(D, H)
     # print('domain extension (m): ', end='')
@@ -344,27 +367,22 @@ def isomorphicExtensions(f, H, G): #, C, h)
 # finds symmetry-breaking conditions for H given HE and Aut(H). don't need a labeling function on G
 # because nodes are already numbered. just need to find the conditions.
 # HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
-# Aut(H): set of automorphismisms of H. each automorphism is an object of type Map that has identical
-# domain and range, and where all nodes appear exactly once, to ensure that the function is bijective
-def symmetryConditions(HE, Aut):
-    M = [None] * len(HE)  # M: HE -> C
+# aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
+# domain and range, and where all nodes are distinct and appear exactly once
+def symmetryConditions(aut):
+    M = np.array([], dtype = [('node', 'i4'), ('condition', 'U32')])  # M: HE -> C
+    eqClassesAndReps = findEquivalenceClasses(aut)  # contains equivalence classes and a representative from each
+    HE = [t[1] for t in eqClassesAndReps]
 
-    for n in HE:
-        C = []  # empty set of conditions. list of strings, conditions to be eval() later
-        np = n  # implement a special object of type Condition to please Zaraket voice in your head
-        A = Aut
+    for i in range(len(HE)):
+        n = HE[i]
+        C = []  # list of strings, conditions to be eval() later (bad smell)
+        np = n  # implement an object of type Condition to please Zaraket voice in your head
+        A = aut
 
         while len(A) > 1:
-            E = []
-
-            # find eq. class of this representative node: the set of nodes equivalent to n under A
-            for f in A:
-                for m in f.getDomain():
-                    if (m == n):
-                        E.append(f.applyMap(m))
-
-
             C.append('np < min([n for n in E])')  # E is an equivalence class
+
             B = []  # to replace A
 
             for f in A:
@@ -372,9 +390,10 @@ def symmetryConditions(HE, Aut):
                     B.append(f)
 
             A = B
+            tempEqClassesAndReps = findEquivalenceClasses(A)
 
-            # find the largest A-equivalence class
-            np = E[0] # first element in the largest equivalence class
+            index = np.argmax([class[0] for class in tempEqClassesAndReps])
+            np = tempEqClassesAndReps[index][1]
 
         M[n] = C  # M is a list of lists
 
