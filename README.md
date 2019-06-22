@@ -1,5 +1,5 @@
 # Tools for motif discovery
-This repository contains Python implementations of graph algorithms for fast motif seach in a network. Only compatible with the networkx library (for now). Installation instructions for networkx can be found [here](https://networkx.github.io/documentation/stable/install.html). Examples and tests can be found in the jupyter notebook located in **src/scratch.ipynb**.
+This repository contains Python implementations of graph algorithms for fast motif seach in a network. Only compatible with the networkx library (for now). Installation instructions for networkx can be found [here](https://networkx.github.io/documentation/stable/install.html). Examples and tests can be found in **src/scratch.ipynb**.
 
 ### Grochow-Kellis subgraph querying algorithm [in development]
 [Link to paper](https://link.springer.com/chapter/10.1007/978-3-540-71681-5_7). Use as follows:
