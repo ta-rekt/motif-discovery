@@ -277,12 +277,12 @@ def findSubgraphInstances(H, G):
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
                 iso = isomorphicExtensions(f, H, G)
-                # f.extend(iso)
 
-                if(set(f.getDomain()) == set(H.nodes())):  # sometimes f doesn't extend all the way
-                    # print('pimp')
+                if(iso):  # sometimes iso is empty
                     instances.append(iso)
+
         # G.remove_node(g)
+    instances = [next(iter(k)) for k in instances]  # removes the elements from their sets
 
     return instances
 
@@ -290,24 +290,24 @@ def findSubgraphInstances(H, G):
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
 def isomorphicExtensions(f, H, G): #, C, h)
-    # print('##### ISOMORPHIC EXTENSIONS CALL #####')
-    # print('partial map: ')
-    # print(np.vstack(f.getMap()))
+    print('##### ISOMORPHIC EXTENSIONS CALL #####')
 
-    isomorphisms = []
+
+    isomorphisms = set()
     neighborsR = {None}
     neighborsD = {None}
     D = f.getDomain()
     R = f.getRange()
 
     if(set(D) == set(H.nodes())):
-        # print('INSTANCE FOUND')
+        print('INSTANCE FOUND')
+        print(list(f.getMap()))
         f.extend(list(np.sort(f.getMap(), order='domainNode')))
-        return f.getMap()
+        return {f}
 
     m = mostConstrainedNode(D, H)
-    # print('domain extension (m): ', end='')
-    # print(m)
+    print('domain extension (m): ', end='')
+    print(m)
 
     # list of neighbors of f(D)
     for r in R:
@@ -321,16 +321,19 @@ def isomorphicExtensions(f, H, G): #, C, h)
     neighborsR = neighborsR.difference(set(R)).difference({None})
     neighborsD = neighborsD.difference(set(D)).difference({None})
 
-    # print('neighbors of partial range: ',end='')
-    # print(neighborsR)
+    print('neighbors of partial range: ',end='')
+    print(neighborsR)
     # print('neighbors of partial domain: ',end='')
     # print(neighborsD)
 
     # check for induced isomorphism
     for n in neighborsR:
 
-        # print('try range extension (n): ',end='')
-        # print(n)
+        print('partial map: ')
+        print(np.vstack(f.getMap()))
+
+        print('try range extension (n): ',end='')
+        print(n)
 
         neighbMinD = set(H[m]).intersection(set(f.getDomain()))
         f_neighbMinD = set([f.applyMap(k) for k in neighbMinD])
@@ -344,18 +347,22 @@ def isomorphicExtensions(f, H, G): #, C, h)
         # print(f_neighbMinD)
 
         if(set(f_neighbMinD) != set(neighbNinR)):
-            # print('range extension not valid')
+            print('range extension not valid')
             pass
 
         else:
-            # print('range extension valid')
-            fp = f
+            print('range extension valid')
+            fp = Map(list(f.getMap()))
             newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
             fp.extend([newNode])
+            print('called')
             iso = isomorphicExtensions(fp, H, G)
+            print('returned')
+            isomorphisms = isomorphisms.union(iso)
 
-            isomorphisms.append(iso)
+            # if(isomorphisms):
+            #     print(next(iter(isomorphisms)).getMap())
 
     # print('EXIT ISOMORPHIC EXTENSIONS')
     # print('isomorphicExtensions output: ',end='')
@@ -382,8 +389,6 @@ def symmetryConditions(aut):
     eqClassesAndReps = findEquivalenceClasses(aut)  # list of tuples: (eq. class, representative node)
     HE = [t[1] for t in eqClassesAndReps]  # list of representative nodes only
 
-    print(eqClassesAndReps)
-
     for i in range(len(HE)):
 
         n = HE[i]
@@ -391,7 +396,6 @@ def symmetryConditions(aut):
         A = aut
         S = eqClassesAndReps[i][0].difference({n})  # equivalence class of n minus n
         M[n] = S  # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
-        print(M)
 
         while len(A) > 1:
 
@@ -399,13 +403,11 @@ def symmetryConditions(aut):
 
             tempEqClassesAndReps = findEquivalenceClasses(A)
 
-            print(tempEqClassesAndReps)
-
             a = [len(t[0]) for t in tempEqClassesAndReps]
             maxx = max(a)  # max size of equivalence classes in A
 
             ind = [key for key, val in enumerate(a) if val == maxx]
-            ind = ind[0]   # argmax
+            ind = ind[0]   # argmax. np.argmax() was being a pain in the neck for some reason
 
             np = tempEqClassesAndReps[ind][1]  # representative of largest equivalence class
             Sp = tempEqClassesAndReps[ind][0].difference({np})
