@@ -369,33 +369,47 @@ def isomorphicExtensions(f, H, G): #, C, h)
 # HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
 # aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
 # domain and range, and where all nodes are distinct and appear exactly once
+
+# additional comments:
+# you wouldn't need an object of type condition: a set of nodes is enough.
+# given a node n of H and the equivalence class of n as determined by symmetryConditions (not
+# the actual equivalence class) one only has to check if the newly encountered node in G has a
+# label less than all the labels of the images of the nodes in that equivalence class, which would
+# be stored alongside n in M. if a node has no equivalence class in M, then there are no symmetry-
+# breaking constraints on that node.
 def symmetryConditions(aut):
-    M = np.array([], dtype = [('node', 'i4'), ('condition', 'U32')])  # M: HE -> C
-    eqClassesAndReps = findEquivalenceClasses(aut)  # contains equivalence classes and a representative from each
-    HE = [t[1] for t in eqClassesAndReps]
+    M = {}  # dict containing nodes in H that have conditions and the set of nodes that constrain them
+    eqClassesAndReps = findEquivalenceClasses(aut)  # list of tuples: (eq. class, representative node)
+    HE = [t[1] for t in eqClassesAndReps]  # list of representative nodes only
+
+    print(eqClassesAndReps)
 
     for i in range(len(HE)):
+
         n = HE[i]
-        C = []  # list of strings, conditions to be eval() later (bad smell)
-        np = n  # implement an object of type Condition to please Zaraket voice in your head
+        np = n
         A = aut
+        S = eqClassesAndReps[i][0].difference({n})  # equivalence class of n minus n
+        M[n] = S  # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
+        print(M)
 
         while len(A) > 1:
-            C.append('np < min([n for n in E])')  # E is an equivalence class
 
-            B = []  # to replace A
+            A = [f for f in A if f.applyMap(np) == np]  # "pinch" the set of automorphisms at np
 
-            for f in A:
-                if (f.applyMap(np) == np):
-                    B.append(f)
-
-            A = B
             tempEqClassesAndReps = findEquivalenceClasses(A)
 
-            index = np.argmax([class[0] for class in tempEqClassesAndReps])
-            np = tempEqClassesAndReps[index][1]
+            print(tempEqClassesAndReps)
 
-        M[n] = C  # M is a list of lists
+            a = [len(t[0]) for t in tempEqClassesAndReps]
+            maxx = max(a)  # max size of equivalence classes in A
+
+            ind = [key for key, val in enumerate(a) if val == maxx]
+            ind = ind[0]   # argmax
+
+            np = tempEqClassesAndReps[ind][1]  # representative of largest equivalence class
+            Sp = tempEqClassesAndReps[ind][0].difference({np})
+            M[np] = Sp
 
     return M
 
