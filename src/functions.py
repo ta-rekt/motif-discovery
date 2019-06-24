@@ -283,16 +283,19 @@ def findSubgraphInstances(H, G):
     # instances of H found in G
     instances = []
 
+    aut = findSubgraphInstances(H, H)  # returns list of automorphisms of H
+    M = symmetryConditions(aut)
+    eqClasses = findEquivalenceClasses(aut)
+    HE = [t[1] for t in eqClasses]
+
     # sort nodes of G by degree
     sortedDegreeG = sortDegrees(G, G.nodes())
 
-    # sort by degree sequence. larger sequence is pointwise larger for all nodes (later)
-
     for g in sortedDegreeG['node']:
-        for h in H.nodes():
+        for h in HE:
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                iso = isomorphicExtensions(f, H, G)
+                iso = isomorphicExtensions(f, H, G, M)
 
                 if(iso):  # sometimes iso is empty
                     instances.append(iso)   # instances might contain duplicate maps
@@ -306,7 +309,7 @@ def findSubgraphInstances(H, G):
 # finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
-def isomorphicExtensions(f, H, G): #, C, h)
+def isomorphicExtensions(f, H, G, M):
     # print('##### ISOMORPHIC EXTENSIONS CALL #####')
 
 
@@ -363,11 +366,12 @@ def isomorphicExtensions(f, H, G): #, C, h)
         # print('f(neighbors of m in D): ', end='')
         # print(f_neighbMinD)
 
-        if(set(f_neighbMinD) != set(neighbNinR)):
-            # print('range extension not valid')
-            pass
+        # constraintLabels = [f.applyMap(k) for k in M[m]]
 
-        else:
+        if(set(f_neighbMinD) == set(neighbNinR)):
+
+            # if():  # n < constraintLabels for node m
+
             # print('range extension valid')
             fp = Map(list(f.getMap()))
             newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
@@ -377,6 +381,10 @@ def isomorphicExtensions(f, H, G): #, C, h)
             iso = isomorphicExtensions(fp, H, G)
             # print('returned')
             isomorphisms = isomorphisms.union(iso)
+
+        else:
+            # print('range extension valid')
+            pass
 
     # print('EXIT ISOMORPHIC EXTENSIONS')
     # print('isomorphicExtensions output: ',end='')
@@ -437,30 +445,28 @@ def symmetryConditions(aut):
 # labels each node with its onion layer and coreness
 # G: network to be decomposed
 def onionDecompose(G):
-    D = sortDegrees(G, G.nodes())
-    labels = np.array([], dtype=[('node', 'i4'), ('layer', 'i4'), ('coreness', 'i4')])
-
+    labels = {}
     core = 1
     layer = 1
-    thisLayer = []
 
     while (len(G.nodes()) > 0):
-        for v in G.nodes():
-            if (G[v] < core):
-                thisLayer.append(v)
+        thisLayer = [v for v in G.nodes() if len(G[v]) <= core]
 
         for v in thisLayer:
-            newLabel = np.array([(v, core, layer)], dtype=[('node', 'i4'), ('layer', 'i4'), ('coreness', 'i4')])
-            labels = np.concatenate(newLabel, labels)
+            newLabel = {'coreness': core,
+                        'layer': layer}
 
-            for w in G[v]:
-                D['degree'][w] = D['degree'][w] - 1
-
+            labels[v] = newLabel
             G.remove_node(v)  # delete from D
 
         layer = layer + 1
 
-        if (D['degree'][0] > core + 1):
-            core = D['degree'][0]
+        D = [len(G[k]) for k in G.nodes()]
+
+        if(D):
+            minn = min(D)
+
+            if (minn > core):
+                core = minn
 
     return labels
