@@ -1,5 +1,5 @@
 # Tools for motif discovery
-This repository contains Python implementations of graph algorithms for fast motif seach in a network. Only compatible with the networkx library (for now). Installation instructions for networkx can be found [here](https://networkx.github.io/documentation/stable/install.html). Examples and tests can be found in **src/scratch.ipynb**.
+This repository contains Python implementations of graph algorithms for fast motif seach in a network. Only compatible with the networkx library (for now). Installation instructions for networkx can be found [here](https://networkx.github.io/documentation/stable/install.html). Examples and tests can be found in [src/scratch.ipynb](https://github.com/UnifyAndConquer/motif-discovery/blob/master/src/scratch.ipynb).
 
 ### Onion decomposition algorithm
 [Link to paper](https://www.nature.com/articles/srep31708). Use as follows:
