@@ -277,16 +277,22 @@ def returnUniqueMaps(maps):
 # finds all instances of query graph H in network G
 # H: query graph
 # G: network to be queried
-def findSubgraphInstances(H, G):
+def findSubgraphInstances(H, G, sig):
     # print('##### FIND SUBGRAPH INSTANCES #####')
 
     # instances of H found in G
     instances = []
 
-    aut = findSubgraphInstances(H, H)  # returns list of automorphisms of H
-    M = symmetryConditions(aut)
-    eqClasses = findEquivalenceClasses(aut)
-    HE = [t[1] for t in eqClasses]
+    if(sig):
+        aut = findSubgraphInstances(H, H, False)  # returns list of automorphisms of H
+        M = symmetryConditions(aut)
+
+        eqClasses = findEquivalenceClasses(aut)
+        HE = [t[1] for t in eqClasses]
+
+    else:
+        HE = H
+        M = None
 
     # sort nodes of G by degree
     sortedDegreeG = sortDegrees(G, G.nodes())
@@ -295,7 +301,7 @@ def findSubgraphInstances(H, G):
         for h in HE:
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                iso = isomorphicExtensions(f, H, G, M)
+                iso = isomorphicExtensions(f, H, G, M)  # M
 
                 if(iso):  # sometimes iso is empty
                     instances.append(iso)   # instances might contain duplicate maps
@@ -306,12 +312,12 @@ def findSubgraphInstances(H, G):
 
     return to_return
 
+
 # finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
-def isomorphicExtensions(f, H, G, M):
+def isomorphicExtensions(f, H, G, M = None): # M
     # print('##### ISOMORPHIC EXTENSIONS CALL #####')
-
 
     isomorphisms = set()
     neighborsR = {None}
@@ -366,21 +372,21 @@ def isomorphicExtensions(f, H, G, M):
         # print('f(neighbors of m in D): ', end='')
         # print(f_neighbMinD)
 
-        # constraintLabels = [f.applyMap(k) for k in M[m]]
-
         if(set(f_neighbMinD) == set(neighbNinR)):
 
-            # if():  # n < constraintLabels for node m
+            if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
+                # print('range extension valid')
+                fp = Map(list(f.getMap()))
+                newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
-            # print('range extension valid')
-            fp = Map(list(f.getMap()))
-            newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+                fp.extend([newNode])
+                # print('called')
+                iso = isomorphicExtensions(fp, H, G)
+                # print('returned')
+                isomorphisms = isomorphisms.union(iso)
 
-            fp.extend([newNode])
-            # print('called')
-            iso = isomorphicExtensions(fp, H, G)
-            # print('returned')
-            isomorphisms = isomorphisms.union(iso)
+            else:
+                pass
 
         else:
             # print('range extension valid')
@@ -395,17 +401,15 @@ def isomorphicExtensions(f, H, G, M):
 
 # finds symmetry-breaking conditions for H given HE and Aut(H). don't need a labeling function on G
 # because nodes are already numbered. just need to find the conditions.
-# HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
-# aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
-# domain and range, and where all nodes are distinct and appear exactly once
-
-# additional comments:
 # you wouldn't need an object of type condition: a set of nodes is enough.
 # given a node n of H and the equivalence class of n as determined by symmetryConditions (not
 # the actual equivalence class) one only has to check if the newly encountered node in G has a
 # label less than all the labels of the images of the nodes in that equivalence class, which would
 # be stored alongside n in M. if a node has no equivalence class in M, then there are no symmetry-
 # breaking constraints on that node.
+# HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
+# aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
+# domain and range, and where all nodes are distinct and appear exactly once
 def symmetryConditions(aut):
     M = {}  # dict containing nodes in H that have conditions and the set of nodes that constrain them
     eqClassesAndReps = findEquivalenceClasses(aut)  # list of tuples: (eq. class, representative node)
@@ -436,6 +440,69 @@ def symmetryConditions(aut):
             M[np] = Sp
 
     return M
+
+
+# there's 4 possible cases:
+# 1. m is a key: we should check if all the images of the values of m
+#    in M are greater than n. if so, accept n. if not, reject the
+#    whole instance (figure out how to do that). if some values have
+#    not been mapped yet, accept n.
+# 2. m is a value: we should find its corresponding key and check if
+#    its image is less than n.
+# 3. m is a key, but has no values: accept n.
+# 4. m is neither a key nor a value: accept n.
+# m: domain extension node
+# n: range extension node
+# M: symmetry-breaking conditions
+# f: partial map
+def checkSBC(m, n, M, f):
+    if (M == None):
+        return True
+
+    for key, value in M.items():
+        if (m == key):
+
+            if (value):  # case 1
+                images = [f.applyMap(k) for k in value] # {L(k)|k in values}
+
+                if (n < min(images)): # all values mapped, n conforms to sbc
+                    # print('conforms to sbc. node accepted')
+                    return True
+
+                elif(min(images) == -1): # some values ont mapped
+                    # print('some conditions unknown. node accepted')
+                    return True
+
+                else:  # n violates sbc
+                    # print('violates sbc. node rejected')
+                    return False
+
+            else:  # case 4
+                # print('no conditions on n. node accepted')
+                return True
+
+        elif (m in value):   # case 2
+
+            if (f.applyMap(key) > 0):
+
+                if (f.applyMap(key) < n):
+                    # print('conforms to sbc. node accepted')
+                    return True
+
+                else:
+                    # print('violates sbc. node rejected')
+                    return False
+
+            else:
+                # print('some conditions unknown. node accepted')
+                return True
+
+
+    inValues = [m in k for k in M.values()]
+
+    if (sum(inValues) == 0 and (m not in M.keys())):
+        # print('no conditions on n. node accepted')
+        return True
 
 
 #######################################
