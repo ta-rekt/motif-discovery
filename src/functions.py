@@ -277,7 +277,7 @@ def returnUniqueMaps(maps):
 # finds all instances of query graph H in network G
 # H: query graph
 # G: network to be queried
-def findSubgraphInstances(H, G, sig):
+def findSubgraphInstances(H, G, sig=True):
     # print('##### FIND SUBGRAPH INSTANCES #####')
 
     # instances of H found in G
@@ -307,6 +307,7 @@ def findSubgraphInstances(H, G, sig):
                     instances.append(iso)   # instances might contain duplicate maps
 
         # G.remove_node(g)
+
     instances = [next(iter(k)) for k in instances]  # removes the elements from their sets
     to_return = returnUniqueMaps(instances)
 
@@ -372,7 +373,7 @@ def isomorphicExtensions(f, H, G, M = None): # M
         # print('f(neighbors of m in D): ', end='')
         # print(f_neighbMinD)
 
-        if(set(f_neighbMinD) == set(neighbNinR)):
+        if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
 
             if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
                 # print('range extension valid')
@@ -503,6 +504,9 @@ def checkSBC(m, n, M, f):
     if (sum(inValues) == 0 and (m not in M.keys())):
         # print('no conditions on n. node accepted')
         return True
+
+    print('something went wrong')
+    return False
 
 
 #######################################
