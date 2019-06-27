@@ -295,13 +295,16 @@ def findEquivalenceClasses(aut):
 
 # returns only functions that are unique in the set maps
 # maps: set of maps, possibly with duplicates
-def returnUniqueMaps(maps):
+def returnUniqueMaps(maps, bijectionsOnly):
     dummy = []
     to_return = []
 
-    for f in maps:
-        if (f.isBijection()):
-            dummy.append(f)
+    if(bijectionsOnly):
+        for f in maps:
+            if (f.isBijection()):
+                dummy.append(f)
+    else:
+        dummy = maps
 
     for g in dummy:
         if(g.inSet(to_return)):
@@ -329,7 +332,7 @@ def findSubgraphInstances(H, G, withSBC=True):
     if(withSBC):
         aut = findSubgraphInstances(H, H, False)  # returns list of automorphisms of H
         M = symmetryConditions(aut)
-        print(M)
+        # print(M)
 
         eqClasses = findEquivalenceClasses(aut)
         HE = [t[1] for t in eqClasses]
@@ -350,14 +353,15 @@ def findSubgraphInstances(H, G, withSBC=True):
                 iso = isomorphicExtensions(f, H, G, 1, M)  # M
                 # print([k.getMap() for k in iso])
 
-                if(iso):  # sometimes iso is empty
+                if(type(iso) == type(f)):  # sometimes iso is empty
+                    instances.append(iso)
+                else:
                     [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
         # G.remove_node(g)
 
-    # instances = [next(iter(k)) for k in instances]  # removes the elements from their sets
-
-    to_return = returnUniqueMaps(instances)
+    bijectionsOnly = not withSBC
+    to_return = returnUniqueMaps(instances, bijectionsOnly)
 
     return to_return
 
@@ -532,53 +536,98 @@ def checkSBC(m, n, M, f):
     if (M == None):
         return True
 
-    for key, value in M.items():
-        if (m == key):
+    if (m in M.keys()):
+        value = M[m]
 
-            if (value):  # case 1
-                images = [f.applyMap(k) for k in value] # {L(k)|k in values}
+        if (value):  # case 1
+            images = [f.applyMap(k) for k in value] # {L(k)|k in values}
 
-                if (n < min(images)): # all values mapped, n conforms to sbc
+            if (n < min(images)): # all values mapped
+                # printSBC(m, n, M, f)
+                # print('min(images): ',end='')
+                # print(min(images))
+
+                if (m in k for k in M.values()):   # case 2
+                    keys = [list(M.keys())[list(M.values()).index(k)] for k in M.values() if m in k]
+
+                    for k in keys:
+                        if (f.applyMap(k) < 0):
+                            # print('some conditions unknown. node accepted')
+                            # printSBC(m, n, M, f)
+                            return True
+
+                        else:
+                            if (f.applyMap(k) > n):
+                                # print('violates to sbc. node rejected')
+                                # printSBC(m, n, M, f)
+                                # print('f(key of m)')
+                                # print(f.applyMap(key))
+                                return False
+
                     # print('conforms to sbc. node accepted')
+                    # printSBC(m, n, M, f)
+                    # print('f(key of m)')
+                    # print(f.applyMap(keys))
+                    # print('min(images): ',end='')
+                    # print(min(images))
+
                     return True
 
-                elif(min(images) == -1): # some values ont mapped
-                    # print('some conditions unknown. node accepted')
-                    return True
 
-                else:  # n violates sbc
-                    # print('violates sbc. node rejected')
-                    return False
-
-            else:  # case 4
-                # print('no conditions on n. node accepted')
+            elif(min(images) == -1): # some values not mapped
+                # print('some conditions unknown. node accepted')
+                # printSBC(m, n, M, f)
                 return True
 
-        elif (m in value):   # case 2
+            else:  # n violates sbc
+                # print('violates sbc. node rejected')
+                return False
 
-            if (f.applyMap(key) > 0):
 
-                if (f.applyMap(key) < n):
-                    # print('conforms to sbc. node accepted')
-                    return True
+    if (m in k for k in M.values()):   # case 2
+        keys = [list(M.keys())[list(M.values()).index(k)] for k in M.values() if m in k]
 
-                else:
-                    # print('violates sbc. node rejected')
-                    return False
+        for k in keys:
+            if (f.applyMap(k) < 0):
+                # print('some conditions unknown. node accepted')
+                # printSBC(m, n, M, f)
+                return True
 
             else:
-                # print('some conditions unknown. node accepted')
-                return True
+                if (f.applyMap(k) > n):
+                    # print('violates to sbc. node rejected')
+                    # printSBC(m, n, M, f)
+                    # print('f(key of m)')
+                    # print(f.applyMap(key))
+                    return False
 
+        # print('conforms to sbc. node accepted')
+        # printSBC(m, n, M, f)
+        # print('f(key of m)')
+        # print(f.applyMap(keys))
 
-    inValues = [m in k for k in M.values()]
-
-    if (sum(inValues) == 0 and (m not in M.keys())):
-        # print('no conditions on n. node accepted')
         return True
 
-    print('something went wrong')
+    else:  # case 4
+        # print('no conditions on n. node accepted')
+        # printSBC(m, n, M, f)
+        return True
+
+    # print('something wrong with SBC')
+    # printSBC(m, n, M, f)
     return False
+
+
+# to ease debugging
+def printSBC(m, n, M, f):
+    print('m: ',end='')
+    print(m)
+    print('n: ',end='')
+    print(n)
+    print('M: ',end='')
+    print(M)
+    print('f: ',end='')
+    print(tuple(f.getMap()))
 
 
 #######################################
