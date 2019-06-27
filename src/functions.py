@@ -360,7 +360,7 @@ def findSubgraphInstances(H, G, withSBC=True):
 
         # G.remove_node(g)
 
-    bijectionsOnly = not withSBC
+    bijectionsOnly = (H == G)
     to_return = returnUniqueMaps(instances, bijectionsOnly)
 
     return to_return
