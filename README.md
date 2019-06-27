@@ -12,7 +12,7 @@ This repository contains Python implementations of graph algorithms for fast mot
     # returns a dictionnary object containing node number, coreness and onion layer.
     fn.onionDecompose(G)
     
-### Grochow-Kellis subgraph querying algorithm [in development]
+### Grochow-Kellis subgraph querying algorithm
 [Link to paper](https://link.springer.com/chapter/10.1007/978-3-540-71681-5_7). Use as follows:
   
     import networkx as nx
@@ -21,11 +21,11 @@ This repository contains Python implementations of graph algorithms for fast mot
     G = nx.fast_gnp_random_graph(10, 0.4, seed=12)
     H = nx.fast_gnp_random_graph(5, 0.7, seed=14)
     
-    # returns an array of objects of type Map from H to subgraphs of G up to symmetry
-    instances = fn.findSubgraphInstances(H, G)
+    # returns an array of objects of type Map from H to subgraphs of G up to symmetry.
+    # setting the third argument to `True` enables symmetry-breaking.
+    instances = fn.findSubgraphInstances(H, G, True)
     
     # to view the mapped nodes
     [k.getMap() for k in instances]
     
-### Shamir-Tsur subtree isomorphism [in development]
 
