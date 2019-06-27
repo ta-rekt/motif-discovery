@@ -24,6 +24,7 @@ class Map():
     def __init__(self, init):   # init is a list containing the initial nodes of the partial map
         self.map = np.array(init, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
+
     def extend(self, extension):   # extends the partial map by a list of tuples called extension
         # print('##### EXTENDING PARTIAL MAP #####')
         # print('extension: ', end='')
@@ -76,20 +77,58 @@ class Map():
                     b = [x for k,x in enumerate(self.map) if self.map['rangeNode'][k] != duplicate]
                     self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
-
         self.map = np.concatenate((self.map, temp))
+
         return True
 
 
+        # equality for functions
+    def isEqual(self, g):
+        a = set([tuple(k) for k in self.map])
+        b = set([tuple(k) for k in g.getMap()])
+
+        return (a == b)
+
+
+    # finds the inverse of a function
+    def inverse(self):
+        g = Map([tuple(k)[::-1] for k in self.map])
+
+        return g
+
+    # tests membership of f in a given set
+    def inSet(self, set):
+        for f in set:
+            if(self.isEqual(f)):
+                return True
+
+        return False
+
+
+    # correctness for bijective functions. checks if function is equal
+    # to its inverse
+    def isBijection(self):
+        g = self.inverse()
+
+        return self.isEqual(g)
+
+
+    # returns function domain
     def getDomain(self):
         return self.map['domainNode']
 
+
+    # returns function range
     def getRange(self):
         return self.map['rangeNode']
 
+
+    # returns domain and range in structured array
     def getMap(self):
         return self.map
 
+
+    # returns the image of a given argument, -1 if it's not part of the map
     def applyMap(self, node):
         for i in range(len(self.map['domainNode'])):
             if (self.map['domainNode'][i] == node):
@@ -255,17 +294,21 @@ def findEquivalenceClasses(aut):
 
 
 # returns only functions that are unique in the set maps
-# maps: set of automorphisms returned by findSubgraphInstances, possibly with duplicate maps
+# maps: set of maps, possibly with duplicates
 def returnUniqueMaps(maps):
-    t = [tuple(k.getMap()) for k in maps]  # changes the functions to tuples for comparison
-
     dummy = []
     to_return = []
 
-    for key, value in enumerate(t):
-        if (value not in dummy):
-            dummy.append(value)
-            to_return.append(maps[key])
+    for f in maps:
+        if (f.isBijection()):
+            dummy.append(f)
+
+    for g in dummy:
+        if(g.inSet(to_return)):
+            pass
+
+        else:
+            to_return.append(g)
 
     return to_return
 
@@ -277,15 +320,16 @@ def returnUniqueMaps(maps):
 # finds all instances of query graph H in network G
 # H: query graph
 # G: network to be queried
-def findSubgraphInstances(H, G, sig=True):
+def findSubgraphInstances(H, G, withSBC=True):
     # print('##### FIND SUBGRAPH INSTANCES #####')
 
     # instances of H found in G
     instances = []
 
-    if(sig):
+    if(withSBC):
         aut = findSubgraphInstances(H, H, False)  # returns list of automorphisms of H
         M = symmetryConditions(aut)
+        print(M)
 
         eqClasses = findEquivalenceClasses(aut)
         HE = [t[1] for t in eqClasses]
@@ -298,17 +342,21 @@ def findSubgraphInstances(H, G, sig=True):
     sortedDegreeG = sortDegrees(G, G.nodes())
 
     for g in sortedDegreeG['node']:
+        # print(g)
         for h in HE:
+            # print('######### NEW NODE #########')
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                iso = isomorphicExtensions(f, H, G, M)  # M
+                iso = isomorphicExtensions(f, H, G, 1, M)  # M
+                # print([k.getMap() for k in iso])
 
                 if(iso):  # sometimes iso is empty
-                    instances.append(iso)   # instances might contain duplicate maps
+                    [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
         # G.remove_node(g)
 
-    instances = [next(iter(k)) for k in instances]  # removes the elements from their sets
+    # instances = [next(iter(k)) for k in instances]  # removes the elements from their sets
+
     to_return = returnUniqueMaps(instances)
 
     return to_return
@@ -317,20 +365,31 @@ def findSubgraphInstances(H, G, sig=True):
 # finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
-def isomorphicExtensions(f, H, G, M = None): # M
-    # print('##### ISOMORPHIC EXTENSIONS CALL #####')
+def isomorphicExtensions(f, H, G, call, M = None): # M
+    # for c in range(call):
+    #     print('   ',end='')
+    #
+    # print('ISOMORPHIC EXTENSIONS CALL #',end='')
+    # print(call)
 
-    isomorphisms = set()
+
+    isomorphisms = []
     neighborsR = {None}
     neighborsD = {None}
     D = f.getDomain()
     R = f.getRange()
 
     if(set(D) == set(H.nodes())):
-        # print('INSTANCE FOUND')
-        # print(list(f.getMap()))
+        # for c in range(call):
+        #     print('   ',end='')
+        # print('INSTANCE FOUND ON CALL #', end='')
+        # print(call)
+
         f.extend(list(np.sort(f.getMap(), order='domainNode')))
-        return {f}
+        # for c in range(call):
+        #     print('   ',end='')
+        # print(list(f.getMap()))
+        return f
 
     m = mostConstrainedNode(D, H)
     # print('domain extension (m): ', end='')
@@ -355,6 +414,7 @@ def isomorphicExtensions(f, H, G, M = None): # M
 
     # check for induced isomorphism
     for n in neighborsR:
+        # print(chr(n+65), end='')
 
         # print('partial map: ')
         # print(np.vstack(f.getMap()))
@@ -382,9 +442,14 @@ def isomorphicExtensions(f, H, G, M = None): # M
 
                 fp.extend([newNode])
                 # print('called')
-                iso = isomorphicExtensions(fp, H, G)
+                call2 = call + 1
+                iso = isomorphicExtensions(fp, H, G, call2, M)
                 # print('returned')
-                isomorphisms = isomorphisms.union(iso)
+
+                if(type(iso) == type(fp)):
+                    isomorphisms.append(iso)
+                else:
+                    [isomorphisms.append(i) for i in iso]
 
             else:
                 pass
@@ -393,9 +458,16 @@ def isomorphicExtensions(f, H, G, M = None): # M
             # print('range extension valid')
             pass
 
-    # print('EXIT ISOMORPHIC EXTENSIONS')
-    # print('isomorphicExtensions output: ',end='')
-    # print(isomorphisms)
+    # for c in range(call):
+    #     print('   ',end='')
+    #
+    # print('EXIT ISOMORPHIC EXTENSIONS CALL #', end='')
+    # print(call)
+    # for c in range(call):
+    #     print('   ',end='')
+    # print('output: ',end='')
+    #
+    # print([tuple(k.getMap()) for k in isomorphisms])
 
     return isomorphisms
 
