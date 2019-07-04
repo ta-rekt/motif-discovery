@@ -297,23 +297,20 @@ def findEquivalenceClasses(aut):
 
 # returns only functions that are unique in the set maps
 # maps: set of maps, possibly with duplicates
-def returnUniqueMaps(maps, bijectionsOnly):
-    dummy = []
+def bijectionsOnly(maps):
+    # dummy = []
     to_return = []
 
-    if(bijectionsOnly):
-        for f in maps:
-            if (f.isBijection()):
-                dummy.append(f)
-    else:
-        dummy = maps
+    for f in maps:
+        if (f.isBijection()):
+            to_return.append(f)
 
-    for g in dummy:
-        if(g.inSet(to_return)):
-            pass
-
-        else:
-            to_return.append(g)
+    # for g in dummy:
+    #     if(g.inSet(to_return)):
+    #         pass
+    #
+    #     else:
+    #         to_return.append(g)
 
     return to_return
 
@@ -452,7 +449,10 @@ def findSubgraphInstances(H, G, withSBC=True):
     instances = []
 
     if(withSBC):
-        aut = findSubgraphInstances(H, H, False)  # returns list of automorphisms of H
+        K = nx.Graph()
+        K.add_nodes_from(H.nodes())
+        K.add_edges_from(H.edges())
+        aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
         M = symmetryConditions(aut)
         # print(M)
 
@@ -480,13 +480,13 @@ def findSubgraphInstances(H, G, withSBC=True):
                 else:
                     [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
-        if(withSBC):
+        if(H != G):
             G.remove_node(g)
 
-    bijectionsOnly = (H == G)
-    to_return = returnUniqueMaps(instances, bijectionsOnly)
+    if(H == G):
+        instances = bijectionsOnly(instances)
 
-    return to_return
+    return instances
 
 
 # finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
