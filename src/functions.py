@@ -97,6 +97,8 @@ class Map():
         return g
 
     # tests membership of f in a given set
+    # speed improvement: try hashing functinons by changing them to strings (on condition that
+    # functions in set are sorted by domain)
     def inSet(self, set):
         for f in set:
             if(self.isEqual(f)):
@@ -148,7 +150,7 @@ def canSupport(h, g, H, G):
     # print('network node: ', end='')
     # print(g)
 
-    if(G.degree[g] >= H.degree(h)):
+    if(G.degree(g) >= H.degree(h)):
         neighborsH = sortDegrees(H, H[h])
         neighborsG = sortDegrees(G, G[g])
         neighborsH = np.array(list(reversed(neighborsH)), dtype=[('node', 'i4'), ('degree', 'i4')])
@@ -245,7 +247,7 @@ def mostConstrainedNode(D, H):
     indices = [key for key, val in candidates if val == maxx]
 
     # degrees of nodes with most neighbors in D
-    candidates = np.array([(i, len(H[i])) for i in indices], dtype=[('node', 'i4'), ('attribute', 'i4')])
+    candidates = np.array([(i, len(H[i])) for i in indices], dtype=[('node','i4'),('attribute','i4')])
 
     if (len(candidates) == 1):
         return candidates['node'][0]
@@ -316,207 +318,13 @@ def returnUniqueMaps(maps, bijectionsOnly):
     return to_return
 
 
-###############################################
-#### grochow-kellis motif search algorithm ####
-###############################################
+# finds the neighbors of m in D, their images, and the neighbors of n in R
+def findCandidates(m, n, H, G, f):
+    nmd = set(H[m]).intersection(set(f.getDomain()))
+    fnmd = set([f.applyMap(k) for k in nmd])
+    nmr = set(G[n]).intersection(set(f.getRange()))
 
-# finds all instances of query graph H in network G
-# H: query graph
-# G: network to be queried
-def findSubgraphInstances(H, G, withSBC=True):
-    # print('##### FIND SUBGRAPH INSTANCES #####')
-
-    # instances of H found in G
-    instances = []
-
-    if(withSBC):
-        aut = findSubgraphInstances(H, H, False)  # returns list of automorphisms of H
-        M = symmetryConditions(aut)
-        # print(M)
-
-        eqClasses = findEquivalenceClasses(aut)
-        HE = [t[1] for t in eqClasses]
-
-    else:
-        HE = H
-        M = None
-
-    # sort nodes of G by degree
-    sortedDegreeG = sortDegrees(G, G.nodes())
-
-    for g in sortedDegreeG['node']:
-        # print(g)
-        for h in HE:
-            # print('######### NEW NODE #########')
-            if(canSupport(h, g, H, G)):
-                f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                iso = isomorphicExtensions(f, H, G, 1, M)  # M
-                # print([k.getMap() for k in iso])
-
-                if(type(iso) == type(f)):  # sometimes iso is empty
-                    instances.append(iso)
-                else:
-                    [instances.append(i) for i in iso]   # instances might contain duplicate maps
-
-        # G.remove_node(g)
-
-    bijectionsOnly = (H == G)
-    to_return = returnUniqueMaps(instances, bijectionsOnly)
-
-    return to_return
-
-
-# finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
-# condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
-# f: partial map to be extended
-def isomorphicExtensions(f, H, G, call, M = None): # M
-    # for c in range(call):
-    #     print('   ',end='')
-    #
-    # print('ISOMORPHIC EXTENSIONS CALL #',end='')
-    # print(call)
-
-
-    isomorphisms = []
-    neighborsR = {None}
-    neighborsD = {None}
-    D = f.getDomain()
-    R = f.getRange()
-
-    if(set(D) == set(H.nodes())):
-        # for c in range(call):
-        #     print('   ',end='')
-        # print('INSTANCE FOUND ON CALL #', end='')
-        # print(call)
-
-        f.extend(list(np.sort(f.getMap(), order='domainNode')))
-        # for c in range(call):
-        #     print('   ',end='')
-        # print(list(f.getMap()))
-        return f
-
-    m = mostConstrainedNode(D, H)
-    # print('domain extension (m): ', end='')
-    # print(m)
-
-    # list of neighbors of f(D)
-    for r in R:
-        neighborsR = neighborsR.union(set(G[r]))
-
-    # list of neighbors of D
-    for d in D:
-        neighborsD = neighborsD.union(set(H[d]))
-
-    # exclusive neighborhood
-    neighborsR = neighborsR.difference(set(R)).difference({None})
-    neighborsD = neighborsD.difference(set(D)).difference({None})
-
-    # print('neighbors of partial range: ',end='')
-    # print(neighborsR)
-    # print('neighbors of partial domain: ',end='')
-    # print(neighborsD)
-
-    # check for induced isomorphism
-    for n in neighborsR:
-        # print(chr(n+65), end='')
-
-        # print('partial map: ')
-        # print(np.vstack(f.getMap()))
-        #
-        # print('try range extension (n): ',end='')
-        # print(n)
-
-        neighbMinD = set(H[m]).intersection(set(f.getDomain()))
-        f_neighbMinD = set([f.applyMap(k) for k in neighbMinD])
-        neighbNinR = set(G[n]).intersection(set(f.getRange()))
-
-        # print('neighbors of m in D: ', end='')
-        # print(neighbMinD)
-        # print('neighbors of n in R: ', end='')
-        # print(neighbNinR)
-        # print('f(neighbors of m in D): ', end='')
-        # print(f_neighbMinD)
-
-        if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
-
-            if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
-                # print('range extension valid')
-                fp = Map(list(f.getMap()))
-                newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
-
-                fp.extend([newNode])
-                # print('called')
-                call2 = call + 1
-                iso = isomorphicExtensions(fp, H, G, call2, M)
-                # print('returned')
-
-                if(type(iso) == type(fp)):
-                    isomorphisms.append(iso)
-                else:
-                    [isomorphisms.append(i) for i in iso]
-
-            else:
-                pass
-
-        else:
-            # print('range extension valid')
-            pass
-
-    # for c in range(call):
-    #     print('   ',end='')
-    #
-    # print('EXIT ISOMORPHIC EXTENSIONS CALL #', end='')
-    # print(call)
-    # for c in range(call):
-    #     print('   ',end='')
-    # print('output: ',end='')
-    #
-    # print([tuple(k.getMap()) for k in isomorphisms])
-
-    return isomorphisms
-
-
-# finds symmetry-breaking conditions for H given HE and Aut(H). don't need a labeling function on G
-# because nodes are already numbered. just need to find the conditions.
-# you wouldn't need an object of type condition: a set of nodes is enough.
-# given a node n of H and the equivalence class of n as determined by symmetryConditions (not
-# the actual equivalence class) one only has to check if the newly encountered node in G has a
-# label less than all the labels of the images of the nodes in that equivalence class, which would
-# be stored alongside n in M. if a node has no equivalence class in M, then there are no symmetry-
-# breaking constraints on that node.
-# HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
-# aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
-# domain and range, and where all nodes are distinct and appear exactly once
-def symmetryConditions(aut):
-    M = {}  # dict containing nodes in H that have conditions and the set of nodes that constrain them
-    eqClassesAndReps = findEquivalenceClasses(aut)  # list of tuples: (eq. class, representative node)
-    HE = [t[1] for t in eqClassesAndReps]  # list of representative nodes only
-
-    for i in range(len(HE)):
-
-        n = HE[i]
-        np = n
-        A = aut
-        S = eqClassesAndReps[i][0].difference({n})  # equivalence class of n minus n
-        M[n] = S  # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
-
-        while len(A) > 1:
-
-            A = [f for f in A if f.applyMap(np) == np]  # "pinch" the set of automorphisms at np
-
-            tempEqClassesAndReps = findEquivalenceClasses(A)
-
-            a = [len(t[0]) for t in tempEqClassesAndReps]
-            maxx = max(a)  # max size of equivalence classes in A
-
-            ind = [key for key, val in enumerate(a) if val == maxx]
-            ind = ind[0]   # argmax. np.argmax() was being a pain in the neck for some reason
-
-            np = tempEqClassesAndReps[ind][1]  # representative of largest equivalence class
-            Sp = tempEqClassesAndReps[ind][0].difference({np})
-            M[np] = Sp
-
-    return M
+    return [nmd, fnmd, nmr]
 
 
 # there's 4 possible cases:
@@ -629,6 +437,211 @@ def printSBC(m, n, M, f):
     print('f: ',end='')
     print(tuple(f.getMap()))
 
+
+###############################################
+#### grochow-kellis motif search algorithm ####
+###############################################
+
+# finds all instances of query graph H in network G
+# H: query graph
+# G: network to be queried
+def findSubgraphInstances(H, G, withSBC=True):
+    # print('##### FIND SUBGRAPH INSTANCES #####')
+
+    # instances of H found in G
+    instances = []
+
+    if(withSBC):
+        aut = findSubgraphInstances(H, H, False)  # returns list of automorphisms of H
+        M = symmetryConditions(aut)
+        # print(M)
+
+        eqClasses = findEquivalenceClasses(aut)
+        HE = [t[1] for t in eqClasses]
+
+    else:
+        HE = H
+        M = None
+
+    # sort nodes of G by degree
+    sortedDegreeG = sortDegrees(G, G.nodes())
+
+    for g in sortedDegreeG['node']:
+        # print(g)
+        for h in HE:
+            # print('######### NEW NODE #########')
+            if(canSupport(h, g, H, G)):
+                f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
+                iso = isomorphicExtensions(f, H, G, 1, M)  # M
+                # print([k.getMap() for k in iso])
+
+                if(type(iso) == type(f)):  # sometimes iso is empty
+                    instances.append(iso)
+                else:
+                    [instances.append(i) for i in iso]   # instances might contain duplicate maps
+
+        if(withSBC):
+            G.remove_node(g)
+
+    bijectionsOnly = (H == G)
+    to_return = returnUniqueMaps(instances, bijectionsOnly)
+
+    return to_return
+
+
+# finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
+# condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
+# f: partial map to be extended
+def isomorphicExtensions(f, H, G, call, M = None): # M
+    # for c in range(call):
+    #     print('   ',end='')
+    #
+    # print('ISOMORPHIC EXTENSIONS CALL #',end='')
+    # print(call)
+
+
+    isomorphisms = []
+    neighborsR = {None}
+    neighborsD = {None}
+    D = f.getDomain()
+    R = f.getRange()
+
+    if(set(D) == set(H.nodes())):
+        # for c in range(call):
+        #     print('   ',end='')
+        # print('INSTANCE FOUND ON CALL #', end='')
+        # print(call)
+
+        f.extend(list(np.sort(f.getMap(), order='domainNode')))
+        # for c in range(call):
+        #     print('   ',end='')
+        # print(list(f.getMap()))
+        return f
+
+    m = mostConstrainedNode(D, H)
+    # print('domain extension (m): ', end='')
+    # print(m)
+
+    # list of neighbors of f(D)
+    for r in R:
+        neighborsR = neighborsR.union(set(G[r]))
+
+    # list of neighbors of D
+    for d in D:
+        neighborsD = neighborsD.union(set(H[d]))
+
+    # exclusive neighborhood
+    neighborsR = neighborsR.difference(set(R)).difference({None})
+    neighborsD = neighborsD.difference(set(D)).difference({None})
+
+    # print('neighbors of partial range: ',end='')
+    # print(neighborsR)
+    # print('neighbors of partial domain: ',end='')
+    # print(neighborsD)
+
+    # check for induced isomorphism
+    for n in neighborsR:
+        # print(chr(n+65), end='')
+
+        # print('partial map: ')
+        # print(np.vstack(f.getMap()))
+        #
+        # print('try range extension (n): ',end='')
+        # print(n)
+
+        out = findCandidates(m, n, H, G, f)
+
+        neighbMinD = out[0]
+        f_neighbMinD = out[1]
+        neighbNinR = out[2]
+
+        # print('neighbors of m in D: ', end='')
+        # print(neighbMinD)
+        # print('neighbors of n in R: ', end='')
+        # print(neighbNinR)
+        # print('f(neighbors of m in D): ', end='')
+        # print(f_neighbMinD)
+
+        if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
+
+            if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
+                # print('range extension valid')
+                fp = Map(list(f.getMap()))
+                newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+
+                fp.extend([newNode])
+                # print('called')
+                call2 = call + 1
+                iso = isomorphicExtensions(fp, H, G, call2, M)
+                # print('returned')
+
+                if(type(iso) == type(fp)):
+                    isomorphisms.append(iso)
+                else:
+                    [isomorphisms.append(i) for i in iso]
+
+            else:
+                pass
+
+        else:
+            # print('range extension valid')
+            pass
+
+    # for c in range(call):
+    #     print('   ',end='')
+    #
+    # print('EXIT ISOMORPHIC EXTENSIONS CALL #', end='')
+    # print(call)
+    # for c in range(call):
+    #     print('   ',end='')
+    # print('output: ',end='')
+    #
+    # print([tuple(k.getMap()) for k in isomorphisms])
+
+    return isomorphisms
+
+
+# finds symmetry-breaking conditions for H given HE and Aut(H). don't need a labeling function on G
+# because nodes are already numbered. just need to find the conditions.
+# you wouldn't need an object of type condition: a set of nodes is enough.
+# given a node n of H and the equivalence class of n as determined by symmetryConditions (not
+# the actual equivalence class) one only has to check if the newly encountered node in G has a
+# label less than all the labels of the images of the nodes in that equivalence class, which would
+# be stored alongside n in M. if a node has no equivalence class in M, then there are no symmetry-
+# breaking constraints on that node.
+# HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
+# aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
+# domain and range, and where all nodes are distinct and appear exactly once
+def symmetryConditions(aut):
+    M = {}  # dict containing nodes in H that have conditions and the set of nodes that constrain them
+    eqClassesAndReps = findEquivalenceClasses(aut)  # list of tuples: (eq. class, representative node)
+    HE = [t[1] for t in eqClassesAndReps]  # list of representative nodes only
+
+    for i in range(len(HE)):
+
+        n = HE[i]
+        np = n
+        A = aut
+        S = eqClassesAndReps[i][0].difference({n})  # equivalence class of n minus n
+        M[n] = S  # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
+
+        while len(A) > 1:
+
+            A = [f for f in A if f.applyMap(np) == np]  # "pinch" the set of automorphisms at np
+
+            tempEqClassesAndReps = findEquivalenceClasses(A)
+
+            a = [len(t[0]) for t in tempEqClassesAndReps]
+            maxx = max(a)  # max size of equivalence classes in A
+
+            ind = [key for key, val in enumerate(a) if val == maxx]
+            ind = ind[0]   # argmax. np.argmax() was being a pain in the neck for some reason
+
+            np = tempEqClassesAndReps[ind][1]  # representative of largest equivalence class
+            Sp = tempEqClassesAndReps[ind][0].difference({np})
+            M[np] = Sp
+
+    return M
 
 #######################################
 #### onion decomposition algorithm ####
