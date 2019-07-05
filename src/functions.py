@@ -316,12 +316,14 @@ def bijectionsOnly(maps):
 
 
 # finds the neighbors of m in D, their images, and the neighbors of n in R
+# comments: using the dynamic algorithm, nmd is in O(l), the coreness of the shell of m in H,
+# and nnr is computed dynamically in O(l)
 def findCandidates(m, n, H, G, f):
-    nmd = set(H[m]).intersection(set(f.getDomain()))
+    nmd = set(H[m]).intersection(set(f.getDomain())) # neighbors of m in D
     fnmd = set([f.applyMap(k) for k in nmd])
-    nmr = set(G[n]).intersection(set(f.getRange()))
+    nnr = set(G[n]).intersection(set(f.getRange()))  # neighbors of n in R
 
-    return [nmd, fnmd, nmr]
+    return [nmd, fnmd, nnr]
 
 
 # there's 4 possible cases:
@@ -452,6 +454,7 @@ def findSubgraphInstances(H, G, withSBC=True):
         K = nx.Graph()
         K.add_nodes_from(H.nodes())
         K.add_edges_from(H.edges())
+
         aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
         M = symmetryConditions(aut)
         # print(M)
@@ -480,11 +483,10 @@ def findSubgraphInstances(H, G, withSBC=True):
                 else:
                     [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
-        if(H != G):
-            G.remove_node(g)
+        G.remove_node(g)
 
-    if(H == G):
-        instances = bijectionsOnly(instances)
+    if(H.edges() == G.edges()):
+        instances = bijectionsOnly(instances)  # for the
 
     return instances
 
@@ -539,7 +541,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
     # print('neighbors of partial domain: ',end='')
     # print(neighborsD)
 
-    # check for induced isomorphism
+    # check for induced isomorphism. 
     for n in neighborsR:
         # print(chr(n+65), end='')
 
