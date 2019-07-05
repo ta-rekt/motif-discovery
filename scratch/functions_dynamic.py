@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 import collections as co
+import operator
 
 count = 0
 
@@ -646,26 +647,36 @@ def symmetryConditions(aut):
 #### onion decomposition algorithm ####
 #######################################
 
-# labels each node with its onion layer and coreness
+# labels each node with its onion layer and coreness, adds them as attributes to G
 # G: network to be decomposed
 def onionDecompose(G):
-    labels = {}
+    K = nx.Graph()
+    K.add_edges_from(G.edges())
+
+    coreness = {}
+    onion_layer = {}
+    successor = {}
+    predecessor = {}
+    traversal_order = {}
+
     core = 1
     layer = 1
+    count = 0
 
-    while (len(G.nodes()) > 0):
-        thisLayer = [v for v in G.nodes() if len(G[v]) <= core]
+    while (len(K.nodes()) > 0):
+        thisLayer = [v for v in K.nodes() if len(K[v]) <= core]
 
         for v in thisLayer:
-            newLabel = {'coreness': core,
-                        'layer': layer}
+            coreness[v] = core
+            onion_layer[v] = layer
+            traversal_order[v] = count
 
-            labels[v] = newLabel
-            G.remove_node(v)  # delete from D
+            K.remove_node(v)  # delete from D
+            count = count + 1
 
         layer = layer + 1
 
-        D = [len(G[k]) for k in G.nodes()]
+        D = [len(K[k]) for k in K.nodes()]
 
         if(D):
             minn = min(D)
@@ -673,4 +684,19 @@ def onionDecompose(G):
             if (minn > core):
                 core = minn
 
-    return labels
+    inorder = sorted(traversal_order.items(), key=operator.itemgetter(1))
+
+    for i in range(len(inorder)-1):
+        successor[inorder[i][0]] = inorder[i+1][0]
+
+    successor[inorder[len(inorder)-1][0]] = None
+
+    for i in range(len(inorder)-1, 0, -1):
+        predecessor[inorder[i][0]] = inorder[i-1][0]
+
+    predecessor[inorder[0][0]] = None
+
+    nx.set_node_attributes(G, coreness, 'coreness')
+    nx.set_node_attributes(G, onion_layer, 'onion_layer')
+    nx.set_node_attributes(G, successor, 'successor')
+    nx.set_node_attributes(G, predecessor, 'predecessor')
