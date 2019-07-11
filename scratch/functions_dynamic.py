@@ -317,9 +317,9 @@ def bijectionsOnly(maps):
 # comments: using the dynamic algorithm, nmd is in O(l), the coreness of the shell of m in H,
 # and nnr is computed dynamically in O(l)
 def findCandidates(m, n, H, G, f):
-    nmd = set(H[m]).intersection(set(f.getDomain())) # neighbors of m in D
+    nmd = set(H[m]).intersection(set(f.getDomain())) # O(min(|H[m]|, |D|))
     fnmd = set([f.applyMap(k) for k in nmd])
-    nnr = set(G[n]).intersection(set(f.getRange()))  # neighbors of n in R
+    nnr = set(G[n]).intersection(set(f.getRange()))  # O(min(|G[n]|, |R|))
 
     return [nmd, fnmd, nnr]
 
@@ -476,10 +476,10 @@ def findSubgraphInstances(H, G, withSBC=True):
                 iso = isomorphicExtensions(f, H, G, 1, M)  # M
                 # print([k.getMap() for k in iso])
 
-                if(type(iso) == type(f)):  # sometimes iso is empty
-                    instances.append(iso)
-                else:
-                    [instances.append(i) for i in iso]   # instances might contain duplicate maps
+                # if(type(iso) == type(f)):  # sometimes iso is just a function
+                #     instances.append(iso)
+                # else:
+                [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
         G.remove_node(g)
 
@@ -531,7 +531,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
         neighborsD = neighborsD.union(set(H[d]))
 
     # exclusive neighborhood
-    neighborsR = neighborsR.difference(set(R)).difference({None})
+    neighborsR = neighborsR.difference(set(R)).difference({None}) # O(|H| * avgdegree(G))
     neighborsD = neighborsD.difference(set(D)).difference({None})
 
     # print('neighbors of partial range: ',end='')
@@ -655,8 +655,8 @@ def onionDecompose(G):
 
     coreness = {}
     onion_layer = {}
-    successor = {}
-    predecessor = {}
+    # successor = {}
+    # predecessor = {}
     traversal_order = {}
 
     core = 1
@@ -669,7 +669,7 @@ def onionDecompose(G):
         for v in thisLayer:
             coreness[v] = core
             onion_layer[v] = layer
-            traversal_order[v] = count
+            traversal_order[count] = v
 
             K.remove_node(v)  # delete from D
             count = count + 1
@@ -684,19 +684,23 @@ def onionDecompose(G):
             if (minn > core):
                 core = minn
 
-    inorder = sorted(traversal_order.items(), key=operator.itemgetter(1))
-
-    for i in range(len(inorder)-1):
-        successor[inorder[i][0]] = inorder[i+1][0]
-
-    successor[inorder[len(inorder)-1][0]] = None
-
-    for i in range(len(inorder)-1, 0, -1):
-        predecessor[inorder[i][0]] = inorder[i-1][0]
-
-    predecessor[inorder[0][0]] = None
+    # inorder = sorted(traversal_order.items(), key=operator.itemgetter(1))
+    #
+    # for i in range(len(inorder)-1):
+    #     successor[inorder[i][0]] = inorder[i+1][0]
+    #
+    # successor[inorder[len(inorder)-1][0]] = None
+    #
+    # for i in range(len(inorder)-1, 0, -1):
+    #     predecessor[inorder[i][0]] = inorder[i-1][0]
+    #
+    # predecessor[inorder[0][0]] = None
 
     nx.set_node_attributes(G, coreness, 'coreness')
     nx.set_node_attributes(G, onion_layer, 'onion_layer')
-    nx.set_node_attributes(G, successor, 'successor')
-    nx.set_node_attributes(G, predecessor, 'predecessor')
+    nx.set_node_attributes(G, traversal_order, 'traversal')
+
+    return traversal_order
+
+    # nx.set_node_attributes(G, successor, 'successor')
+    # nx.set_node_attributes(G, predecessor, 'predecessor')
