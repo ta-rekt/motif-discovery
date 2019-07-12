@@ -613,31 +613,31 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 # aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
 # domain and range, and where all nodes are distinct and appear exactly once
 def symmetryConditions(aut):
-    M = {}  # dict containing nodes in H that have conditions and the set of nodes that constrain them
-    eqClassesAndReps = findEquivalenceClasses(aut)  # list of tuples: (eq. class, representative node)
-    HE = [t[1] for t in eqClassesAndReps]  # list of representative nodes only
+    M = {} # dict containing nodes in H that have conditions and the set of nodes that constrain them
+    eqClassesAndReps = findEquivalenceClasses(aut) # list of tuples: (eq. class, representative node)
+    HE = [t[1] for t in eqClassesAndReps]                         # list of representative nodes only
 
     for i in range(len(HE)):
 
         n = HE[i]
         np = n
         A = aut
-        S = eqClassesAndReps[i][0].difference({n})  # equivalence class of n minus n
-        M[n] = S  # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
+        S = eqClassesAndReps[i][0].difference({n})                   # equivalence class of n minus n
+        M[n] = S   # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
 
         while len(A) > 1:
 
-            A = [f for f in A if f.applyMap(np) == np]  # "pinch" the set of automorphisms at np
+            A = [f for f in A if f.applyMap(np) == np]       # "pinch" the set of automorphisms at np
 
             tempEqClassesAndReps = findEquivalenceClasses(A)
 
             a = [len(t[0]) for t in tempEqClassesAndReps]
-            maxx = max(a)  # max size of equivalence classes in A
+            maxx = max(a)                                      # max size of equivalence classes in A
 
             ind = [key for key, val in enumerate(a) if val == maxx]
-            ind = ind[0]   # argmax. np.argmax() was being a pain in the neck for some reason
+            ind = ind[0]           # argmax. np.argmax() was being a pain in the neck for some reason
 
-            np = tempEqClassesAndReps[ind][1]  # representative of largest equivalence class
+            np = tempEqClassesAndReps[ind][1]           # representative of largest equivalence class
             Sp = tempEqClassesAndReps[ind][0].difference({np})
             M[np] = Sp
 
