@@ -136,6 +136,95 @@ class Map():
         return -1
 
 
+class DynamicTree():
+
+    def __init__(self, G, root):
+        self.dict = {root: {'parent': None,
+                            'children': [],
+                            'table': {0: set(G.nodes()).remove(root)}},
+                    'root': root,
+                    'leaves': [root]}
+
+        self.graph = G
+
+
+    def __getitem__(self, key):
+        return self.dict[key]
+
+
+    def __setitem__(self, key, value):
+        self.dict[key] = value
+
+
+    def addNode(self, node, parent):
+        if (node in self.dict.keys()):
+            print('node already added')
+
+        else:
+            v = node[len(node)-1]
+            self.dict[node] = {'parent': parent,
+                               'children': [],
+                               'table': {0: self.dict[parent]['table'][0].remove(v)}}
+
+            self.dict[parent]['children'].append(node)
+            self.dict['leaves'].remove(parent)
+            self.dict['leaves'].append(node)
+
+
+    def removeNode(self, node):
+        if (node not in self.dict.keys()):
+            print('node not in tree')
+
+        else:
+            p = self.dict[node]['parent']
+            self.dict[p]['children'].remove(node)
+
+            if self.dict[node]['children']:
+                for child in self.dict[node]['children']:
+                    self.removeNode[child]
+
+            del self.dict[node]
+
+            if node in self.dict['leaves']:
+                self.dict['leaves'].remove(node)
+
+
+    def depth(self, node):
+        r = self.dict['root']
+        n = node
+        path = []
+
+        while(n != r):
+            path.append(n)
+            n = self.dict[n]['parent']
+
+        return len(path)
+
+
+    def getTable(self, node):
+        return self.dict[node]['table']
+
+
+    def setTable(self, node, k, value):
+        self.dict[node]['table'][k] = value
+
+
+    def leaves(self):
+        return self.dict['leaves']
+
+
+    def parent(self, node):
+        return self.dict[node]['parent']
+
+
+    def children(self, node):
+        return self.dict[node]['children']
+
+
+    def printTree(self):
+        print(self.dict)
+
+
 # returns true if g can support h (according to node degree and neighbor degree sequence)
 # and false otherwise.
 # g, h: indices of corresponding nodes
@@ -165,6 +254,227 @@ def canSupport(h, g, H, G):
 
     # print("rejected because of degree")
     return False
+
+###############################################
+#### grochow-kellis motif search algorithm ####
+###############################################
+
+# adapted to iterative dynamic implementation of isomorphicExtensions
+def findSubgraphInstances_dynamic(H, G, withSBC=True):
+
+    instances = []
+
+    # adds onion layer, coreness and traversal attributes to G and H
+    traversal_order_G = fn.onionDecompose(G)
+    traversal_order_H = fn.onionDecompose(H)
+
+    # last node to be peeled off in H
+    k = traversal_order_H[len(H)-1]
+
+    # traverse G in increasing onion layer
+    for i in range(len(G)):
+        g = traversal_order_G[i]
+
+        if(canSupport(k, g, H, G)):
+            instances.append(isomorphicExtensions_dynamic(g, H, G))
+
+    return instances
+
+
+# a dynamic implementation of isomorphic extensions
+def isomorphicExtensions_dynamic(g, H, G, M=None):
+
+    instances = []
+    traversal = {}
+
+    for i in H.nodes():
+        traversal[i] = H.nodes(i)['traversal']
+
+                      # variables initialization #
+
+    t = len(H)-1                            # initial traversal index
+    h = traversal[t]      # last node peeled off is first to traverse
+    f = fn.Map([(h, g)])                        # initial partial map
+    D = {h}                                  # initial partial domain
+    R = {f.applyMap(h)}                       # initial partial range
+    m = h                                  # initial domain extension
+    nmD = D.intersection(set(H[m]))             # neighbors of m in D
+    fnmD = set([f.applyMap(i) for i in nmD]) # images of nmD elements
+    c = H.nodes(m)['coreness']         # coreness of domain extension
+
+    candidateTree = DynamicTree(G, g)
+    leaves = candidateTree['leaves'][:]
+
+
+                  # computing isomorphism candidates #
+
+    for l in leaves:     # leaves are in fact paths from root to leaf
+        v = l[len(l)-1]             # actual leaf, candidate for f(m)
+        p = candidateTree[l]['parent']       # parent of current leaf
+
+        if (l == candidateTree['root']):
+            candidateTree[l]['table'][1] = set(G[v])
+            candidateTree[l]['table'][2] = set()
+
+        else:
+            loopEnd = min(c, len(D))+1
+
+            for i in range(1, loopEnd):        # [0] is non-neighbors
+                N_ip1_R = set(candidateTree[p]['table'][i])
+                N_i_R = set(candidateTree[p]['table'][i-1])
+                N_v = set(G[v])
+
+                newEntry = N_ip1_R.union(N_i_R.intersection(N_v)).difference(N_ip1_R.intersection(N_v))
+                candidateTree[l]['table'][i] = newEntry
+
+            candidateTree[l]['table'][loopEnd] = set()
+
+        N_k = candidateTree[l]['table'][k]     # get N_k neighborhood
+
+
+                        # testing isomorphism #
+
+        if not N_k:                       # N_k neighborhood is empty
+            while ((len(candidateTree[p]['children']) == 1) or p == candidateTree['root']):
+                f = p
+                p = candidateTree[p]['parent']
+
+            candidateTree.removeNode(f)
+
+        else:
+            for i in N_k:
+                if (set(G[i]).intersection(D) == fnmD):   # O(|G[i]|)
+                    temp = list(l)
+                    temp.append(i)
+                    newNode = tuple(temp)
+                    candidateTree.addNode(newNode, l)
+
+        if (l == leaves[len(leaves)-1]):               # last element
+            if (len(D) == len(H)):                         # all done
+                for leaf in leaves:
+                    instances.append[leaf]
+
+                return instances
+
+            D = D.union({m})
+            t = t - 1
+            m = traversal[t]
+            leaves = candidateTree['leaves']
+
+            
+#######################################
+#### onion decomposition algorithm ####
+#######################################
+
+# labels each node with its onion layer and coreness, adds them as attributes to G
+# G: network to be decomposed
+def onionDecompose(G):
+    K = nx.Graph()
+    K.add_edges_from(G.edges())
+
+    coreness = {}
+    onion_layer = {}
+    traversal_order = {}
+
+    core = 1
+    layer = 1
+    count = 0
+
+    while (len(K.nodes()) > 0):
+        thisLayer = [v for v in K.nodes() if len(K[v]) <= core]
+
+        for v in thisLayer:
+            coreness[v] = core
+            onion_layer[v] = layer
+            traversal_order[count] = v
+
+            K.remove_node(v)  # delete from D
+            count = count + 1
+
+        layer = layer + 1
+
+        D = [len(K[k]) for k in K.nodes()]
+
+        if(D):
+            minn = min(D)
+
+            if (minn > core):
+                core = minn
+    nx.set_node_attributes(G, coreness, 'coreness')
+    nx.set_node_attributes(G, onion_layer, 'onion_layer')
+    nx.set_node_attributes(G, traversal_order, 'traversal')
+
+    return traversal_order
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# finds symmetry-breaking conditions for H given HE and Aut(H). don't need a labeling function on G
+# because nodes are already numbered. just need to find the conditions.
+# you wouldn't need an object of type condition: a set of nodes is enough.
+# given a node n of H and the equivalence class of n as determined by symmetryConditions (not
+# the actual equivalence class) one only has to check if the newly encountered node in G has a
+# label less than all the labels of the images of the nodes in that equivalence class, which would
+# be stored alongside n in M. if a node has no equivalence class in M, then there are no symmetry-
+# breaking constraints on that node.
+# HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
+# aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
+# domain and range, and where all nodes are distinct and appear exactly once
+def symmetryConditions(aut):
+    M = {} # dict containing nodes in H that have conditions and the set of nodes that constrain them
+    eqClassesAndReps = findEquivalenceClasses(aut) # list of tuples: (eq. class, representative node)
+    HE = [t[1] for t in eqClassesAndReps]                         # list of representative nodes only
+
+    for i in range(len(HE)):
+
+        n = HE[i]
+        np = n
+        A = aut
+        S = eqClassesAndReps[i][0].difference({n})                   # equivalence class of n minus n
+        M[n] = S   # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
+
+        while len(A) > 1:
+
+            A = [f for f in A if f.applyMap(np) == np]       # "pinch" the set of automorphisms at np
+
+            tempEqClassesAndReps = findEquivalenceClasses(A)
+
+            a = [len(t[0]) for t in tempEqClassesAndReps]
+            maxx = max(a)                                      # max size of equivalence classes in A
+
+            ind = [key for key, val in enumerate(a) if val == maxx]
+            ind = ind[0]           # argmax. np.argmax() was being a pain in the neck for some reason
+
+            np = tempEqClassesAndReps[ind][1]           # representative of largest equivalence class
+            Sp = tempEqClassesAndReps[ind][0].difference({np})
+            M[np] = Sp
+
+    return M
 
 
 # returns an ordered list of tuples (node, degree) sorted by degree
@@ -202,74 +512,6 @@ def largestDegreeSequence(H, L):
         # print((l, sortedN))
 
     return max
-
-
-# finds the nodes in H\D with the most neighbors in D and among those, selects the node
-# with highest degree and degree sequence
-# D: domain of the partial map (list of nodes)
-# H: query graph (of type Graph)
-def mostConstrainedNode(D, H):
-    # print('##### MOST CONSTRAINED NODE #####')
-    # print('domain of partial map: ', end='')
-    # print(D)
-
-    maxx = 0
-    candidates = np.array([], dtype=[('node', 'i4'), ('attribute', 'i4')])
-    neighborsD = {None}
-
-    # list of neighbors of D
-    for d in D:
-        neighborsD = neighborsD.union(set(H[d]))
-
-    neighborsD = neighborsD.difference({None})
-
-    # neighbors of D exclusively in H with the number of neighbors in D
-    neighborsD = neighborsD.difference(set(D))
-    # print('neighbors of D: ', end='')
-    # print(neighborsD)
-
-    for n in neighborsD:
-        count = 0
-        for i in H[n]:
-            if (i in D):
-                count = count + 1
-
-        c = np.array([(n, count)], dtype=[('node', 'i4'), ('attribute', 'i4')])
-        candidates = np.concatenate((candidates, c))
-
-    # select the candidates with the most neighbors in D
-    # print('candidates: ', end='')
-    # print(candidates)
-
-    maxx = max(candidates['attribute'])
-    indices = [key for key, val in candidates if val == maxx]
-
-    # degrees of nodes with most neighbors in D
-    candidates = np.array([(i, len(H[i])) for i in indices], dtype=[('node','i4'),('attribute','i4')])
-
-    if (len(candidates) == 1):
-        return candidates['node'][0]
-
-    else:
-        # select those with highest degree
-        # print('nodes with most neighbors in D, degrees: ',end='')
-        # print(candidates)
-
-        maxx = max(candidates['attribute'])
-        ind = [key for key, val in candidates if val == maxx]
-        # print('nodes of largest degree: ', end='')
-        # print(ind)
-
-        if (len(ind) == 1):
-            return ind[0]
-
-        else:
-            # select those with highest degree sequence
-            m = largestDegreeSequence(H, ind)
-            # print('most constrained node: ', end='')
-            # print(m)
-            return m[0]
-
 
 # finds the set of equivalence classes. returns a list; the position
 # of an element in the list corresponds to a node and that element is
@@ -433,274 +675,3 @@ def printSBC(m, n, M, f):
     print(M)
     print('f: ',end='')
     print(tuple(f.getMap()))
-
-
-###############################################
-#### grochow-kellis motif search algorithm ####
-###############################################
-
-# finds all instances of query graph H in network G
-# H: query graph
-# G: network to be queried
-def findSubgraphInstances(H, G, withSBC=True):
-    # print('##### FIND SUBGRAPH INSTANCES #####')
-
-    # instances of H found in G
-    instances = []
-
-    if(withSBC):
-        K = nx.Graph()
-        K.add_nodes_from(H.nodes())
-        K.add_edges_from(H.edges())
-
-        aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
-        M = symmetryConditions(aut)
-        # print(M)
-
-        eqClasses = findEquivalenceClasses(aut)
-        HE = [t[1] for t in eqClasses]
-
-    else:
-        HE = H
-        M = None
-
-    # sort nodes of G by degree
-    sortedDegreeG = sortDegrees(G, G.nodes())
-
-    for g in sortedDegreeG['node']:
-        # print(g)
-        for h in HE:
-            # print('######### NEW NODE #########')
-            if(canSupport(h, g, H, G)):
-                f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                iso = isomorphicExtensions(f, H, G, 1, M)  # M
-                # print([k.getMap() for k in iso])
-
-                # if(type(iso) == type(f)):  # sometimes iso is just a function
-                #     instances.append(iso)
-                # else:
-                [instances.append(i) for i in iso]   # instances might contain duplicate maps
-
-        G.remove_node(g)
-
-    if(H.edges() == G.edges()):
-        instances = bijectionsOnly(instances)  # for the
-
-    return instances
-
-
-# finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
-# condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
-# f: partial map to be extended
-def isomorphicExtensions(f, H, G, call, M = None): # M
-    # for c in range(call):
-    #     print('   ',end='')
-    #
-    # print('ISOMORPHIC EXTENSIONS CALL #',end='')
-    # print(call)
-
-
-    isomorphisms = []
-    neighborsR = {None}
-    neighborsD = {None}
-    D = f.getDomain()
-    R = f.getRange()
-
-    if(set(D) == set(H.nodes())):
-        # for c in range(call):
-        #     print('   ',end='')
-        # print('INSTANCE FOUND ON CALL #', end='')
-        # print(call)
-
-        f.extend(list(np.sort(f.getMap(), order='domainNode')))
-        # for c in range(call):
-        #     print('   ',end='')
-        # print(list(f.getMap()))
-        return f
-
-    m = mostConstrainedNode(D, H)
-    # print('domain extension (m): ', end='')
-    # print(m)
-
-    # list of neighbors of f(D)
-    for r in R:
-        neighborsR = neighborsR.union(set(G[r]))
-
-    # list of neighbors of D
-    for d in D:
-        neighborsD = neighborsD.union(set(H[d]))
-
-    # exclusive neighborhood
-    neighborsR = neighborsR.difference(set(R)).difference({None}) # O(|H| * avgdegree(G))
-    neighborsD = neighborsD.difference(set(D)).difference({None})
-
-    # print('neighbors of partial range: ',end='')
-    # print(neighborsR)
-    # print('neighbors of partial domain: ',end='')
-    # print(neighborsD)
-
-    # check for induced isomorphism.
-    for n in neighborsR:
-        # print(chr(n+65), end='')
-
-        # print('partial map: ')
-        # print(np.vstack(f.getMap()))
-        #
-        # print('try range extension (n): ',end='')
-        # print(n)
-
-        out = findCandidates(m, n, H, G, f)
-
-        neighbMinD = out[0]
-        f_neighbMinD = out[1]
-        neighbNinR = out[2]
-
-        # print('neighbors of m in D: ', end='')
-        # print(neighbMinD)
-        # print('neighbors of n in R: ', end='')
-        # print(neighbNinR)
-        # print('f(neighbors of m in D): ', end='')
-        # print(f_neighbMinD)
-
-        if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
-
-            if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
-                # print('range extension valid')
-                fp = Map(list(f.getMap()))
-                newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
-
-                fp.extend([newNode])
-                # print('called')
-                call2 = call + 1
-                iso = isomorphicExtensions(fp, H, G, call2, M)
-                # print('returned')
-
-                if(type(iso) == type(fp)):
-                    isomorphisms.append(iso)
-                else:
-                    [isomorphisms.append(i) for i in iso]
-
-            else:
-                pass
-
-        else:
-            # print('range extension valid')
-            pass
-
-    # for c in range(call):
-    #     print('   ',end='')
-    #
-    # print('EXIT ISOMORPHIC EXTENSIONS CALL #', end='')
-    # print(call)
-    # for c in range(call):
-    #     print('   ',end='')
-    # print('output: ',end='')
-    #
-    # print([tuple(k.getMap()) for k in isomorphisms])
-
-    return isomorphisms
-
-
-# finds symmetry-breaking conditions for H given HE and Aut(H). don't need a labeling function on G
-# because nodes are already numbered. just need to find the conditions.
-# you wouldn't need an object of type condition: a set of nodes is enough.
-# given a node n of H and the equivalence class of n as determined by symmetryConditions (not
-# the actual equivalence class) one only has to check if the newly encountered node in G has a
-# label less than all the labels of the images of the nodes in that equivalence class, which would
-# be stored alongside n in M. if a node has no equivalence class in M, then there are no symmetry-
-# breaking constraints on that node.
-# HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
-# aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
-# domain and range, and where all nodes are distinct and appear exactly once
-def symmetryConditions(aut):
-    M = {} # dict containing nodes in H that have conditions and the set of nodes that constrain them
-    eqClassesAndReps = findEquivalenceClasses(aut) # list of tuples: (eq. class, representative node)
-    HE = [t[1] for t in eqClassesAndReps]                         # list of representative nodes only
-
-    for i in range(len(HE)):
-
-        n = HE[i]
-        np = n
-        A = aut
-        S = eqClassesAndReps[i][0].difference({n})                   # equivalence class of n minus n
-        M[n] = S   # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
-
-        while len(A) > 1:
-
-            A = [f for f in A if f.applyMap(np) == np]       # "pinch" the set of automorphisms at np
-
-            tempEqClassesAndReps = findEquivalenceClasses(A)
-
-            a = [len(t[0]) for t in tempEqClassesAndReps]
-            maxx = max(a)                                      # max size of equivalence classes in A
-
-            ind = [key for key, val in enumerate(a) if val == maxx]
-            ind = ind[0]           # argmax. np.argmax() was being a pain in the neck for some reason
-
-            np = tempEqClassesAndReps[ind][1]           # representative of largest equivalence class
-            Sp = tempEqClassesAndReps[ind][0].difference({np})
-            M[np] = Sp
-
-    return M
-
-#######################################
-#### onion decomposition algorithm ####
-#######################################
-
-# labels each node with its onion layer and coreness, adds them as attributes to G
-# G: network to be decomposed
-def onionDecompose(G):
-    K = nx.Graph()
-    K.add_edges_from(G.edges())
-
-    coreness = {}
-    onion_layer = {}
-    # successor = {}
-    # predecessor = {}
-    traversal_order = {}
-
-    core = 1
-    layer = 1
-    count = 0
-
-    while (len(K.nodes()) > 0):
-        thisLayer = [v for v in K.nodes() if len(K[v]) <= core]
-
-        for v in thisLayer:
-            coreness[v] = core
-            onion_layer[v] = layer
-            traversal_order[count] = v
-
-            K.remove_node(v)  # delete from D
-            count = count + 1
-
-        layer = layer + 1
-
-        D = [len(K[k]) for k in K.nodes()]
-
-        if(D):
-            minn = min(D)
-
-            if (minn > core):
-                core = minn
-
-    # inorder = sorted(traversal_order.items(), key=operator.itemgetter(1))
-    #
-    # for i in range(len(inorder)-1):
-    #     successor[inorder[i][0]] = inorder[i+1][0]
-    #
-    # successor[inorder[len(inorder)-1][0]] = None
-    #
-    # for i in range(len(inorder)-1, 0, -1):
-    #     predecessor[inorder[i][0]] = inorder[i-1][0]
-    #
-    # predecessor[inorder[0][0]] = None
-
-    nx.set_node_attributes(G, coreness, 'coreness')
-    nx.set_node_attributes(G, onion_layer, 'onion_layer')
-    nx.set_node_attributes(G, traversal_order, 'traversal')
-
-    return traversal_order
-
-    # nx.set_node_attributes(G, successor, 'successor')
-    # nx.set_node_attributes(G, predecessor, 'predecessor')
