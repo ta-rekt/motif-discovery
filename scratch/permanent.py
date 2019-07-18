@@ -39,6 +39,7 @@ def permanent(mat):
     Returns the permanent of the matrix mat.
     """
     return per(mat, 0, [], 1)
+    
 
 def main():
     """
