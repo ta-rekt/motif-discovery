@@ -29,3 +29,11 @@ This repository contains Python implementations of graph algorithms for fast mot
     [k.getMap() for k in instances]
     
 
+### Counting rooted subtrees
+This function counts the number of subtrees isomorphic to a rooted query tree T in a rooted tree S. Counting full 5-ary trees in 10-ary trees of sizes 120 and 500 respectively takes about 2 mins. Full k-ary trees are the worst case in terms of running time, which is super-exponential in k because the bulk of the computation consists in computing matrix permanents. However, performance can be greatly improved by using a more efficient implementation of the matrix permanent algorithm. In spite of this, the function does very well on random trees: on a random query tree of size 120 and a search tree of size 600, the number of subtrees is found in less than 9 seconds.
+
+    # T and S are respectively full 5- and 10-ary trees rooted at 0
+    T = nx.full_rary_tree(5, 60)
+    S = nx.full_rary_tree(10, 200)
+    
+    fn.countRootedSubtrees(T, 0, S, 0)
