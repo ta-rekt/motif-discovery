@@ -465,9 +465,10 @@ def findSubgraphInstances(H, G, withSBC=True):
 
     # instances of H found in G
     instances = []
+    trees = 0
 
     if (len(H) > len(G)):
-        return instances
+        return 0
 
     if(withSBC):
 
@@ -501,6 +502,9 @@ def findSubgraphInstances(H, G, withSBC=True):
         G = nx.relabel_nodes(G, mapping)
         J = G
 
+        onionDecompose(G)
+        onionDecompose(H)
+
     else:
         HE = [i for i in H.nodes()]
         M = None
@@ -514,20 +518,39 @@ def findSubgraphInstances(H, G, withSBC=True):
             # print('######### NEW NODE #########')
 
             if(canSupport(h, g, H, G)):
-                f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                iso = isomorphicExtensions(f, H, G, 1, M)  # M
+                r_g = False
+                r_h = False
 
-                # print([k.getMap() for k in iso])
+                if (withSBC):
+                    r_g = G.node[g]['is_root']  #r_g is the child of g on g's tree, if g is a root
+                    r_h = H.node[h]['is_root']
 
-                if(type(iso) == type(f)):  # sometimes iso is single element
-                    instances.append(iso)
+                if(r_g and r_h):
+                    T = subtree(H, r_h, h)
+                    T.add_edge(r_h, h)
+                    S = subtree(G, r_g, g)
+                    S.add_edge(r_g, g)
+
+                    trees += countRootedSubtrees(T, h, S, g)
+
                 else:
-                    [instances.append(i) for i in iso]   # instances might contain duplicate maps
+                    f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
+                    iso = isomorphicExtensions(f, H, G, 1, M)  # M
+
+                    # print([k.getMap() for k in iso])
+
+                    if(type(iso) == type(f)):  # sometimes iso is single element
+                        instances.append(iso)
+                    else:
+                        [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
         G.remove_node(g)
 
     if(H.edges() == G.edges()):
         instances = bijectionsOnly(instances)
+
+    if (withSBC):
+        return len(instances) + trees
 
     return instances
 
@@ -714,6 +737,7 @@ def onionDecompose(G):
     K = nx.Graph()
     K.add_edges_from(G.edges())
 
+    is_root = {}
     coreness = {}
     onion_layer = {}
     traversal_order = {}
@@ -722,6 +746,8 @@ def onionDecompose(G):
     layer = 1
     count = 0
 
+    shell_2 = set()
+
     while (len(K.nodes()) > 0):
         thisLayer = [v for v in K.nodes() if len(K[v]) <= core]
 
@@ -729,6 +755,10 @@ def onionDecompose(G):
             coreness[v] = core
             onion_layer[v] = layer
             traversal_order[count] = v
+            is_root[v] = None
+
+            if (core == 2):
+                shell_2.add(v)
 
             K.remove_node(v)  # delete from D
             count = count + 1
@@ -742,6 +772,13 @@ def onionDecompose(G):
 
             if (minn > core):
                 core = minn
+
+    for v in shell_2:
+        for u in G[v]:
+            if coreness[u] == 1:
+                is_root[v] = u
+
+    nx.set_node_attributes(G, is_root, 'is_root')
     nx.set_node_attributes(G, coreness, 'coreness')
     nx.set_node_attributes(G, onion_layer, 'onion_layer')
     nx.set_node_attributes(G, traversal_order, 'traversal')
@@ -833,6 +870,7 @@ def rectPermanent(M, l, r):
 
     return p
 
+
 # draws a bipartite graph with labeled edges
 def drawBipartiteGraph(F, l, r):
 
@@ -905,12 +943,16 @@ def countRootedSubtrees(T, rootT, S, rootS):
 
     # early abort by root degree
     if (len(T[rootT]) > len(S[rootS])):
-        print('early abort: root degree')
+
+        # print('early abort: root degree')
+
         return count
 
     # early abort by depth
     if (nx.eccentricity(T, rootT) > nx.eccentricity(S, rootS)):
-        print('early abort: max depth')
+
+        # print('early abort: max depth')
+
         return count
 
     seqT = depthDegreeSequence(T, rootT)
@@ -919,13 +961,17 @@ def countRootedSubtrees(T, rootT, S, rootS):
     for i in seqT.keys():
         # early abort by number of nodes at each depth
         if (len(seqT[i]) > len(seqS[i])):
-            print('early abort: number of depth-k nodes')
+
+            # print('early abort: number of depth-k nodes')
+
             return count
 
         # early abort by node degree sequence at each depth
         for k, v in enumerate(seqT[i]):
             if (v > seqS[i][k]):
-                print('early abort: depth-k degree sequence')
+
+                # print('early abort: depth-k degree sequence')
+
                 return count
 
     # recursion
