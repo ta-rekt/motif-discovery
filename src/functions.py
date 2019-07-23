@@ -154,7 +154,7 @@ def canSupport(h, g, H, G):
     # print('network node: ', end='')
     # print(g)
 
-    if(G.degree(g) >= H.degree(h)):
+    if(len(G[g]) >= len(H[h])):
         neighborsH = sortDegrees(H, H[h])
         neighborsG = sortDegrees(G, G[g])
         neighborsH = np.array(list(reversed(neighborsH)), dtype=[('node', 'i4'), ('degree', 'i4')])
@@ -164,12 +164,17 @@ def canSupport(h, g, H, G):
 
         for i in range(minn):
             if(neighborsG['degree'][i] < neighborsH['degree'][i]):
+
                 # print("rejected because of sequence")
+
                 return False
+
         # print("can support")
+
         return True
 
     # print("rejected because of degree")
+
     return False
 
 
@@ -277,24 +282,20 @@ def mostConstrainedNode(D, H):
             return m[0]
 
 
-# finds the set of equivalence classes. returns a list; the position
-# of an element in the list corresponds to a node and that element is
-# the equivalence class it belongs to.
+# finds the set of equivalence classes. returns a dict; keys are representative nodes
+# and values are equivalence classes
 # aut: set of automorphisms. must be a list of objects of type Map.
 def findEquivalenceClasses(aut):
-    eq = []
+    eq = {}
 
-    for n in aut[0].getDomain():
-        E = {None}
+    for n in aut[0].getDomain():   # loop through all nodes in the domain (in order)
+        E = set()
 
         for f in aut:
-            E = E.union({f.applyMap(n)})
+            E = E.union({f.applyMap(n)})   # gather all nodes that n can be mapped to in E
 
-        E = E.difference({None})
-
-        tuple = (E, list(E)[0])
-        if (tuple not in eq):
-            eq.append(tuple)
+        if (E not in eq.values()):
+            eq[n] = E
 
     return eq
 
@@ -308,13 +309,6 @@ def bijectionsOnly(maps):
     for f in maps:
         if (f.isBijection()):
             to_return.append(f)
-
-    # for g in dummy:
-    #     if(g.inSet(to_return)):
-    #         pass
-    #
-    #     else:
-    #         to_return.append(g)
 
     return to_return
 
@@ -354,6 +348,7 @@ def checkSBC(m, n, M, f):
             images = [f.applyMap(k) for k in value] # {L(k)|k in values}
 
             if (n < min(images)): # all values mapped
+
                 # printSBC(m, n, M, f)
                 # print('min(images): ',end='')
                 # print(min(images))
@@ -363,16 +358,20 @@ def checkSBC(m, n, M, f):
 
                     for k in keys:
                         if (f.applyMap(k) < 0):
+
                             # print('some conditions unknown. node accepted')
                             # printSBC(m, n, M, f)
+
                             return True
 
                         else:
                             if (f.applyMap(k) > n):
+
                                 # print('violates to sbc. node rejected')
                                 # printSBC(m, n, M, f)
                                 # print('f(key of m)')
-                                # print(f.applyMap(key))
+                                # print(f.applyMap(k))
+
                                 return False
 
                     # print('conforms to sbc. node accepted')
@@ -386,12 +385,16 @@ def checkSBC(m, n, M, f):
 
 
             elif(min(images) == -1): # some values not mapped
+
                 # print('some conditions unknown. node accepted')
                 # printSBC(m, n, M, f)
+
                 return True
 
             else:  # n violates sbc
+
                 # print('violates sbc. node rejected')
+
                 return False
 
 
@@ -400,16 +403,20 @@ def checkSBC(m, n, M, f):
 
         for k in keys:
             if (f.applyMap(k) < 0):
+
                 # print('some conditions unknown. node accepted')
                 # printSBC(m, n, M, f)
+
                 return True
 
             else:
                 if (f.applyMap(k) > n):
+
                     # print('violates to sbc. node rejected')
                     # printSBC(m, n, M, f)
                     # print('f(key of m)')
                     # print(f.applyMap(key))
+
                     return False
 
         # print('conforms to sbc. node accepted')
@@ -420,12 +427,15 @@ def checkSBC(m, n, M, f):
         return True
 
     else:  # case 4
+
         # print('no conditions on n. node accepted')
         # printSBC(m, n, M, f)
+
         return True
 
     # print('something wrong with SBC')
     # printSBC(m, n, M, f)
+
     return False
 
 
@@ -450,39 +460,66 @@ def printSBC(m, n, M, f):
 # G: network to be queried
 def findSubgraphInstances(H, G, withSBC=True):
     # print('##### FIND SUBGRAPH INSTANCES #####')
+    J = nx.Graph()
+    J.add_edges_from(G.edges())
 
     # instances of H found in G
     instances = []
 
+    if (len(H) > len(G)):
+        return instances
+
     if(withSBC):
+
         K = nx.Graph()
         K.add_nodes_from(H.nodes())
         K.add_edges_from(H.edges())
 
         aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
+
+        # print()
+        # print('##################################################')
+        # print('aut: ',end='')
+        # print([i.getMap() for i in aut])
+
         M = symmetryConditions(aut)
+
+        # print()
+        #
+        # print('M: ',end='')
         # print(M)
 
         eqClasses = findEquivalenceClasses(aut)
-        HE = [t[1] for t in eqClasses]
+        HE = [t for t in eqClasses.keys()]
+
+        # print('equivalence classes: ',end='')
+        # print(eqClasses)
+
+        # sort nodes of G by degree
+        sortedDegreeG = sortDegrees(G, G.nodes())
+        mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
+        G = nx.relabel_nodes(G, mapping)
+        J = G
 
     else:
-        HE = H
+        HE = [i for i in H.nodes()]
         M = None
 
-    # sort nodes of G by degree
-    sortedDegreeG = sortDegrees(G, G.nodes())
 
-    for g in sortedDegreeG['node']:
-        # print(g)
+    for g in sorted(list(G.nodes())):
         for h in HE:
+
+            # print('HE:', HE)
+            # print('h:',h,'g:',g)
             # print('######### NEW NODE #########')
+
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
                 iso = isomorphicExtensions(f, H, G, 1, M)  # M
+
                 # print([k.getMap() for k in iso])
 
-                if(type(iso) == type(f)):  # sometimes iso is empty
+                if(type(iso) == type(f)):  # sometimes iso is single element
                     instances.append(iso)
                 else:
                     [instances.append(i) for i in iso]   # instances might contain duplicate maps
@@ -490,7 +527,7 @@ def findSubgraphInstances(H, G, withSBC=True):
         G.remove_node(g)
 
     if(H.edges() == G.edges()):
-        instances = bijectionsOnly(instances)  # for the
+        instances = bijectionsOnly(instances)
 
     return instances
 
@@ -499,12 +536,12 @@ def findSubgraphInstances(H, G, withSBC=True):
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
 def isomorphicExtensions(f, H, G, call, M = None): # M
+
     # for c in range(call):
     #     print('   ',end='')
     #
     # print('ISOMORPHIC EXTENSIONS CALL #',end='')
     # print(call)
-
 
     isomorphisms = []
     neighborsR = {None}
@@ -513,18 +550,22 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
     R = f.getRange()
 
     if(set(D) == set(H.nodes())):
+
         # for c in range(call):
         #     print('   ',end='')
         # print('INSTANCE FOUND ON CALL #', end='')
         # print(call)
 
         f.extend(list(np.sort(f.getMap(), order='domainNode')))
+
         # for c in range(call):
         #     print('   ',end='')
         # print(list(f.getMap()))
+
         return f
 
     m = mostConstrainedNode(D, H)
+
     # print('domain extension (m): ', end='')
     # print(m)
 
@@ -547,7 +588,6 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     # check for induced isomorphism.
     for n in neighborsR:
-        # print(chr(n+65), end='')
 
         # print('partial map: ')
         # print(np.vstack(f.getMap()))
@@ -571,7 +611,9 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
         if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
 
             if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
+
                 # print('range extension valid')
+
                 fp = Map(list(f.getMap()))
                 newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
@@ -587,10 +629,11 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
                     [isomorphisms.append(i) for i in iso]
 
             else:
+                # print('failed SBC')
                 pass
 
         else:
-            # print('range extension valid')
+            # print('failed isomorphism test')
             pass
 
     # for c in range(call):
@@ -601,7 +644,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
     # for c in range(call):
     #     print('   ',end='')
     # print('output: ',end='')
-    #
+
     # print([tuple(k.getMap()) for k in isomorphisms])
 
     return isomorphisms
@@ -618,34 +661,43 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 # HE: set of equivalence representatives of H. these are nodes of H, one from each equivalence class.
 # aut: set of automorphismisms of H. each automorphism is an object of type Map that has identical
 # domain and range, and where all nodes are distinct and appear exactly once
+# M[n] = S: S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
 def symmetryConditions(aut):
-    M = {}  # dict containing nodes in H that have conditions and the set of nodes that constrain them
-    eqClassesAndReps = findEquivalenceClasses(aut)  # list of tuples: (eq. class, representative node)
-    HE = [t[1] for t in eqClassesAndReps]  # list of representative nodes only
+    M = {}  # dict containing nodes in H that have conditions and their constraining sets of nodes
+    eqClasses = findEquivalenceClasses(aut)  # list of tuples: eq. class, representative node
+    HE = [i for i in eqClasses.keys()]  # list of representative nodes
 
-    for i in range(len(HE)):
+    # print(eqClasses)
 
-        n = HE[i]
+    for n in HE:
         np = n
         A = aut
-        S = eqClassesAndReps[i][0].difference({n})  # equivalence class of n minus n
-        M[n] = S  # S is a set of nodes such that l(n) < min(l(k) | k in S) i.e. l(S) must be > l(n)
+        temp_eqClasses = eqClasses
 
         while len(A) > 1:
+            # print('A before:')
+            # print([tuple(i.getMap()) for i in A])
 
-            A = [f for f in A if f.applyMap(np) == np]  # "pinch" the set of automorphisms at np
-
-            tempEqClassesAndReps = findEquivalenceClasses(A)
-
-            a = [len(t[0]) for t in tempEqClassesAndReps]
-            maxx = max(a)  # max size of equivalence classes in A
-
-            ind = [key for key, val in enumerate(a) if val == maxx]
-            ind = ind[0]   # argmax. np.argmax() was being a pain in the neck for some reason
-
-            np = tempEqClassesAndReps[ind][1]  # representative of largest equivalence class
-            Sp = tempEqClassesAndReps[ind][0].difference({np})
+            Sp = temp_eqClasses[np]
+            Sp.remove(np)
             M[np] = Sp
+            # print('M[',np,'] = ',Sp)
+
+            A = [f for f in A if f.applyMap(np) == np]
+
+            # print('A after:')
+            # print([tuple(i.getMap()) for i in A])
+
+            temp_eqClasses = findEquivalenceClasses(A)
+
+            maxx = 0
+
+            for k in temp_eqClasses.keys():
+                size = len(temp_eqClasses[k])
+
+                if (size > maxx):
+                    maxx = size
+                    np = k
 
     return M
 

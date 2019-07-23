@@ -139,11 +139,11 @@ class Map():
 class DynamicTree():
 
     def __init__(self, G, root):
-        self.dict = {root: {'parent': None,
-                            'children': [],
-                            'table': {0: set(G.nodes()).remove(root)}},
-                    'root': root,
-                    'leaves': [root]}
+        self.dict = {(root,): {'parent': None,
+                            'children': set(),
+                            'table': {0: set(G.nodes()).difference(G[root])}},
+                    'root': (root,),
+                    'leaves': {(root,)}}
 
         self.graph = G
 
@@ -157,6 +157,9 @@ class DynamicTree():
 
 
     def addNode(self, node, parent):
+        if (type(parent) == type(0)):
+            parent = (parent,)
+
         if (node in self.dict.keys()):
             print('node already added')
 
@@ -164,11 +167,11 @@ class DynamicTree():
             v = node[len(node)-1]
             self.dict[node] = {'parent': parent,
                                'children': [],
-                               'table': {0: self.dict[parent]['table'][0].remove(v)}}
+                               'table': {0: self.dict[parent]['table'][0].difference(self.graph[v])}}
 
-            self.dict[parent]['children'].append(node)
+            self.dict[parent]['children'].add(node)
             self.dict['leaves'].remove(parent)
-            self.dict['leaves'].append(node)
+            self.dict['leaves'].add(node)
 
 
     def removeNode(self, node):
@@ -255,9 +258,15 @@ def canSupport(h, g, H, G):
     # print("rejected because of degree")
     return False
 
+
+
 ###############################################
 #### grochow-kellis motif search algorithm ####
 ###############################################
+
+def print_situation(D, R, m, l, nmD, fnmD, candidateTree):
+    if (len(l) == 1):
+        print('D: ', D)
 
 # adapted to iterative dynamic implementation of isomorphicExtensions
 def findSubgraphInstances_dynamic(H, G, withSBC=True):
@@ -265,8 +274,8 @@ def findSubgraphInstances_dynamic(H, G, withSBC=True):
     instances = []
 
     # adds onion layer, coreness and traversal attributes to G and H
-    traversal_order_G = fn.onionDecompose(G)
-    traversal_order_H = fn.onionDecompose(H)
+    traversal_order_G = onionDecompose(G)
+    traversal_order_H = onionDecompose(H)
 
     # last node to be peeled off in H
     k = traversal_order_H[len(H)-1]
@@ -288,29 +297,36 @@ def isomorphicExtensions_dynamic(g, H, G, M=None):
     traversal = {}
 
     for i in H.nodes():
-        traversal[i] = H.nodes(i)['traversal']
+        traversal[i] = H.nodes[i]['traversal']
 
-                      # variables initialization #
+                                 # variables initialization #
 
-    t = len(H)-1                            # initial traversal index
-    h = traversal[t]      # last node peeled off is first to traverse
-    f = fn.Map([(h, g)])                        # initial partial map
-    D = {h}                                  # initial partial domain
-    R = {f.applyMap(h)}                       # initial partial range
-    m = h                                  # initial domain extension
-    nmD = D.intersection(set(H[m]))             # neighbors of m in D
-    fnmD = set([f.applyMap(i) for i in nmD]) # images of nmD elements
-    c = H.nodes(m)['coreness']         # coreness of domain extension
+    t = len(H)-1                                                     # initial traversal index
+    h = traversal[t]                               # last node peeled off is first to traverse
+    f = Map([(h, g)])                                                    # initial partial map
+    D = {h}                                                           # initial partial domain
+    R = {f.applyMap(h)}                                                # initial partial range
+    m = h                                                           # initial domain extension
+    nmD = D.intersection(set(H[m]))                                      # neighbors of m in D
+    fnmD = set([f.applyMap(i) for i in nmD])                          # images of nmD elements
+    k = len(nmD)
+    c = H.nodes[m]['coreness']                                  # coreness of domain extension
 
     candidateTree = DynamicTree(G, g)
-    leaves = candidateTree['leaves'][:]
+    leaves = list(candidateTree['leaves'])[:]
 
 
-                  # computing isomorphism candidates #
+                             # computing isomorphism candidates #
 
-    for l in leaves:     # leaves are in fact paths from root to leaf
-        v = l[len(l)-1]             # actual leaf, candidate for f(m)
-        p = candidateTree[l]['parent']       # parent of current leaf
+    for l in leaves:                              # leaves are in fact paths from root to leaf
+
+        print_situation(D, R, m, l, nmD, fnmD, candidateTree)
+
+        if (type(l) == type(1)):
+            v = l
+        else:
+            v = l[len(l)-1]                                  # actual leaf, candidate for f(m)
+        p = candidateTree[l]['parent']                                # parent of current leaf
 
         if (l == candidateTree['root']):
             candidateTree[l]['table'][1] = set(G[v])
@@ -319,7 +335,7 @@ def isomorphicExtensions_dynamic(g, H, G, M=None):
         else:
             loopEnd = min(c, len(D))+1
 
-            for i in range(1, loopEnd):        # [0] is non-neighbors
+            for i in range(1, loopEnd):                                 # [0] is non-neighbors
                 N_ip1_R = set(candidateTree[p]['table'][i])
                 N_i_R = set(candidateTree[p]['table'][i-1])
                 N_v = set(G[v])
@@ -329,28 +345,30 @@ def isomorphicExtensions_dynamic(g, H, G, M=None):
 
             candidateTree[l]['table'][loopEnd] = set()
 
-        N_k = candidateTree[l]['table'][k]     # get N_k neighborhood
+        N_k = candidateTree[l]['table'][k]                              # get N_k neighborhood
 
 
-                        # testing isomorphism #
+                                   # testing isomorphism #
 
-        if not N_k:                       # N_k neighborhood is empty
-            while ((len(candidateTree[p]['children']) == 1) or p == candidateTree['root']):
-                f = p
-                p = candidateTree[p]['parent']
+        if not N_k:                                                # N_k neighborhood is empty
+            if not (l == candidateTree['root']):
+                while (len(candidateTree[p]['children']) == 1):
+                    f = p
+                    p = candidateTree[p]['parent']
 
-            candidateTree.removeNode(f)
+                candidateTree.removeNode(f)
 
         else:
+            print(N_k)
             for i in N_k:
-                if (set(G[i]).intersection(D) == fnmD):   # O(|G[i]|)
+                if (set(G[i]).intersection(D) == fnmD):                            # O(|G[i]|)
                     temp = list(l)
                     temp.append(i)
                     newNode = tuple(temp)
                     candidateTree.addNode(newNode, l)
 
-        if (l == leaves[len(leaves)-1]):               # last element
-            if (len(D) == len(H)):                         # all done
+        if (l == leaves[len(leaves)-1]):                                        # last element
+            if (len(D) == len(H)):                                                  # all done
                 for leaf in leaves:
                     instances.append[leaf]
 
@@ -359,9 +377,13 @@ def isomorphicExtensions_dynamic(g, H, G, M=None):
             D = D.union({m})
             t = t - 1
             m = traversal[t]
-            leaves = candidateTree['leaves']
+            nmD = D.intersection(set(H[m]))                              # neighbors of m in D
+            fnmD = set([f.applyMap(i) for i in nmD])                  # images of nmD elements
+            k = len(nmD)
+            c = H.nodes[m]['coreness']
+            leaves = list(candidateTree['leaves'])[:]
 
-            
+
 #######################################
 #### onion decomposition algorithm ####
 #######################################
@@ -491,28 +513,6 @@ def sortDegrees(H, L):
     return sortedDegreeH
 
 
-# finds the node with the largest neighbor degree sequence, returns it with its degree sequence
-# H: query graph
-# L: list of nodes in H to be compared
-def largestDegreeSequence(H, L):
-    max = (None, [0]*len(L)) # (node number, [list of neighbor degrees])
-    sig = True
-
-    for l in L:
-        if (l in H.nodes()):
-            sortedN = sortDegrees(H, H[l])
-            sortedN = list(reversed(sortedN['degree']))
-
-            for i in range(min(len(sortedN), len(max[1]))):
-                sig &= (sortedN[i] >= max[1][i])
-
-            if (sig):
-                max = (l, sortedN)
-
-        # print((l, sortedN))
-
-    return max
-
 # finds the set of equivalence classes. returns a list; the position
 # of an element in the list corresponds to a node and that element is
 # the equivalence class it belongs to.
@@ -545,25 +545,7 @@ def bijectionsOnly(maps):
         if (f.isBijection()):
             to_return.append(f)
 
-    # for g in dummy:
-    #     if(g.inSet(to_return)):
-    #         pass
-    #
-    #     else:
-    #         to_return.append(g)
-
     return to_return
-
-
-# finds the neighbors of m in D, their images, and the neighbors of n in R
-# comments: using the dynamic algorithm, nmd is in O(l), the coreness of the shell of m in H,
-# and nnr is computed dynamically in O(l)
-def findCandidates(m, n, H, G, f):
-    nmd = set(H[m]).intersection(set(f.getDomain())) # O(min(|H[m]|, |D|))
-    fnmd = set([f.applyMap(k) for k in nmd])
-    nnr = set(G[n]).intersection(set(f.getRange()))  # O(min(|G[n]|, |R|))
-
-    return [nmd, fnmd, nnr]
 
 
 # there's 4 possible cases:
