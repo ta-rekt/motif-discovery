@@ -285,17 +285,20 @@ def mostConstrainedNode(D, H):
 # finds the set of equivalence classes. returns a dict; keys are representative nodes
 # and values are equivalence classes
 # aut: set of automorphisms. must be a list of objects of type Map.
-def findEquivalenceClasses(aut):
+def findEquivalenceClasses(aut, M=None):
     eq = {}
 
-    for n in aut[0].getDomain():   # loop through all nodes in the domain (in order)
+    for m in aut[0].getDomain():   # loop through all nodes in the domain (in order)
         E = set()
 
         for f in aut:
-            E = E.union({f.applyMap(n)})   # gather all nodes that n can be mapped to in E
+            n = f.applyMap(m)
+
+            if (checkSBC(m, n, M, f)):
+                E = E.union({n})   # gather all nodes that n can be mapped to in E
 
         if (E not in eq.values()):
-            eq[n] = E
+            eq[m] = E
 
     return eq
 
@@ -465,7 +468,6 @@ def findSubgraphInstances(H, G, withSBC=True):
 
     # instances of H found in G
     instances = []
-    trees = 0
 
     if (len(H) > len(G)):
         return 0
@@ -491,7 +493,7 @@ def findSubgraphInstances(H, G, withSBC=True):
         # print(M)
 
         eqClasses = findEquivalenceClasses(aut)
-        HE = [t for t in eqClasses.keys()]
+        HE = [t for t in sorted(eqClasses.keys())]
 
         # print('equivalence classes: ',end='')
         # print(eqClasses)
@@ -501,9 +503,6 @@ def findSubgraphInstances(H, G, withSBC=True):
         mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
         G = nx.relabel_nodes(G, mapping)
         J = G
-
-        onionDecompose(G)
-        onionDecompose(H)
 
     else:
         HE = [i for i in H.nodes()]
@@ -518,39 +517,23 @@ def findSubgraphInstances(H, G, withSBC=True):
             # print('######### NEW NODE #########')
 
             if(canSupport(h, g, H, G)):
-                r_g = False
-                r_h = False
+                f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
+                iso = isomorphicExtensions(f, H, G, 1, M)  # M
 
-                if (withSBC):
-                    r_g = G.node[g]['is_root']  #r_g is the child of g on g's tree, if g is a root
-                    r_h = H.node[h]['is_root']
+                # print([k.getMap() for k in iso])
 
-                if(r_g and r_h):
-                    T = subtree(H, r_h, h)
-                    T.add_edge(r_h, h)
-                    S = subtree(G, r_g, g)
-                    S.add_edge(r_g, g)
-
-                    trees += countRootedSubtrees(T, h, S, g)
-
+                if(type(iso) == type(f)):  # sometimes iso is single element
+                    instances.append(iso)
                 else:
-                    f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                    iso = isomorphicExtensions(f, H, G, 1, M)  # M
-
-                    # print([k.getMap() for k in iso])
-
-                    if(type(iso) == type(f)):  # sometimes iso is single element
-                        instances.append(iso)
-                    else:
-                        [instances.append(i) for i in iso]   # instances might contain duplicate maps
+                    [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
         G.remove_node(g)
 
     if(H.edges() == G.edges()):
         instances = bijectionsOnly(instances)
 
-    if (withSBC):
-        return len(instances) + trees
+    # if(withSBC):
+    #     return len(instances)
 
     return instances
 
@@ -584,6 +567,8 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
         # for c in range(call):
         #     print('   ',end='')
         # print(list(f.getMap()))
+        # print('nodes of G: ',end='')
+        # print(G.nodes())
 
         return f
 
@@ -641,6 +626,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
                 newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
                 fp.extend([newNode])
+
                 # print('called')
                 call2 = call + 1
                 iso = isomorphicExtensions(fp, H, G, call2, M)
@@ -693,287 +679,51 @@ def symmetryConditions(aut):
     # print(eqClasses)
 
     for n in HE:
-        np = n
-        A = aut
-        temp_eqClasses = eqClasses
+        if (n not in M.keys()):
+            np = n
+            A = aut
+            temp_eqClasses = eqClasses
 
-        while len(A) > 1:
-            # print('A before:')
-            # print([tuple(i.getMap()) for i in A])
+            # print(n)
 
-            Sp = temp_eqClasses[np]
-            Sp.remove(np)
-            M[np] = Sp
-            # print('M[',np,'] = ',Sp)
+            A = [f for f in A if checkSBCFunction(f, M)]
 
-            A = [f for f in A if f.applyMap(np) == np]
+            while (len(A) > 1):
 
-            # print('A after:')
-            # print([tuple(i.getMap()) for i in A])
+                # print(len(A))
+                # print('A before:')
+                # print([tuple(i.getMap()) for i in A])
 
-            temp_eqClasses = findEquivalenceClasses(A)
+                Sp = temp_eqClasses[np]
+                Sp.remove(np)
+                M[np] = Sp
 
-            maxx = 0
+                # print('M[',np,'] = ',Sp)
 
-            for k in temp_eqClasses.keys():
-                size = len(temp_eqClasses[k])
+                A = [f for f in A if f.applyMap(np) == np and checkSBCFunction(f, M)]
+                temp_eqClasses = findEquivalenceClasses(A, M)
 
-                if (size > maxx):
-                    maxx = size
-                    np = k
+                # print(temp_eqClasses)
+
+                maxx = 0
+
+                for k in temp_eqClasses.keys():
+                    size = len(temp_eqClasses[k])
+
+                    if (size > maxx):
+                        maxx = size
+                        np = k
+
+                # print('A after:')
+                # print([tuple(i.getMap()) for i in A])
 
     return M
 
 
-
-
-###########################################################################
-###################### onion decomposition algorithm ######################
-###########################################################################
-
-# labels each node with its onion layer and coreness, adds them as attributes to G
-# G: network to be decomposed
-def onionDecompose(G):
-    K = nx.Graph()
-    K.add_edges_from(G.edges())
-
-    is_root = {}
-    coreness = {}
-    onion_layer = {}
-    traversal_order = {}
-
-    core = 1
-    layer = 1
-    count = 0
-
-    shell_2 = set()
-
-    while (len(K.nodes()) > 0):
-        thisLayer = [v for v in K.nodes() if len(K[v]) <= core]
-
-        for v in thisLayer:
-            coreness[v] = core
-            onion_layer[v] = layer
-            traversal_order[count] = v
-            is_root[v] = None
-
-            if (core == 2):
-                shell_2.add(v)
-
-            K.remove_node(v)  # delete from D
-            count = count + 1
-
-        layer = layer + 1
-
-        D = [len(K[k]) for k in K.nodes()]
-
-        if(D):
-            minn = min(D)
-
-            if (minn > core):
-                core = minn
-
-    for v in shell_2:
-        for u in G[v]:
-            if coreness[u] == 1:
-                is_root[v] = u
-
-    nx.set_node_attributes(G, is_root, 'is_root')
-    nx.set_node_attributes(G, coreness, 'coreness')
-    nx.set_node_attributes(G, onion_layer, 'onion_layer')
-    nx.set_node_attributes(G, traversal_order, 'traversal')
-
-    return traversal_order
-
-
-
-
-##########################################################################
-###################### counting isomorphic subtrees ######################
-##########################################################################
-
-# generates a random tree of size n
-def randomTree(n, seed):
-    rnd.seed(seed)
-
-    T = nx.Graph()
-    T.add_node(0)
-
-    for i in range(1, n):
-        r = rnd.randint(0,i-1)
-        T.add_edge(r, i)
-
-    return T
-
-
-# returns a list of depths with the sorted degree sequence of the
-# vertices at that depth
-def depthDegreeSequence(T, root):
-    paths = nx.single_source_shortest_path(T, root)
-    seq = {}
-    longestPath = max([len(v) for v in paths.values()])
-
-    for i in range(1, longestPath+1):
-        seq[i] = set()
-
-    for key in paths.keys():
-        path = paths[key]
-        l = len(path)
-        seq[l] = seq[l].union({key})
-
-    for key in seq.keys():
-        degrees = sorted([len(T[v])-1 for v in seq[key] if key != 1])
-        seq[key] = [i for i in reversed(degrees)]
-
-    seq[1] = [len(T[root])]
-
-    return seq
-
-
-# returns the subtree of T rooted at r with parent p
-def subtree(T, r, p):
-    K = nx.Graph()
-    K.add_edges_from(T.edges())
-    K.remove_edge(r, p)
-
-    for k in nx.connected_components(K):
-        if (r in k):
-            F = nx.Graph()
-
-            if (len(k) == 1):
-                F.add_node(r)
-            else:
-                for i in k:
-                    for j in k:
-                        if ((i, j) in K.edges()):
-                            F.add_edge(i, j)
-
-    return F
-
-
-# computes the permanent of a non-square matrix
-def rectPermanent(M, l, r):
-    # obtain the biadjacency matrix B from M, assuming M is
-    # properly indexed with left vertices numbered less than
-    # right vertices
-    ind = [[i+j*(l+r) for i in range(l, l+r)] for j in range(l)]
-    B = np.array(np.take(M, ind))
-
-    # enumerate all square submatrices of B
-    indices = [i for i in range(r)]
-    p = 0
-
-    for e in it.combinations(indices, l):
-        ind = [[i+j*(r) for i in e] for j in range(l)]
-        A = np.array(np.take(B, ind))
-        p += per.permanent(A)
-
-    return p
-
-
-# draws a bipartite graph with labeled edges
-def drawBipartiteGraph(F, l, r):
-
-    M = nx.to_numpy_matrix(F)
-    D = nx.to_dict_of_dicts(F)
-
-    indices = [i for i in range(l)]
-    pos = nx.bipartite_layout(F, indices)
-    nx.draw_networkx_nodes(F, pos)
-    nx.draw_networkx_edges(F, pos, width=1.0, alpha=0.5)
-    _dict_ = {}
-    _dict2_ = {}
-
-    for n in F.edges():
-        if (D[n[0]][n[1]]['weight']):
-            _dict_[n] = D[n[0]][n[1]]['weight']
-
-    for n in F.nodes():
-        _dict2_[n] = n
-
-    nx.draw_networkx_edge_labels(F, pos, edge_labels=_dict_, font_size=8, label_pos=0.25)
-    nx.draw_networkx_labels(F, pos, labels=_dict2_, font_size=8)
-
-
-# recursively counts the matchings of a bipartite graph G, obtained
-# from subtree isomorphisms between subtrees of T and subtrees of S
-def countMatchings(T, rootT, S, rootS, call=0, init=True):
-
-    parentT = rootT
-    parentS = rootS
-    childrenT = set(T[rootT]).difference({rootT})
-    childrenS = set(S[rootS]).difference({rootS})
-    G = nx.Graph()
-
-    # base case
-    if (not childrenT):
-        return 1
-
-    if (len(childrenT) > len(childrenS)):
-        return 0
-
-    indices = [0]
-
-    for key_i, i in enumerate(childrenT):
-        for key_j, j in enumerate(childrenS):
-            Ti = subtree(T, i, rootT)
-            Sj = subtree(S, j, rootS)
-            call2 = call + 1
-            k = countMatchings(Ti, i, Sj, j, call2, False)
-
-            if (k > 0):
-                G.add_edge(key_i, key_j+len(childrenT), weight = k)
-        indices.append(key_i)
-
-    l = len(childrenT)
-    r = len(childrenS)
-
-    M = nx.to_numpy_matrix(G, [i for i in range(l+r)])
-
-    matchings = rectPermanent(M, l, r)
-
-    return matchings
-
-
-# recursively find the number of induced subtrees of H's depth-1
-# branches and apply bipartite matching to count the number of
-# possible matches.
-def countRootedSubtrees(T, rootT, S, rootS):
-    count = 0
-
-    # early abort by root degree
-    if (len(T[rootT]) > len(S[rootS])):
-
-        # print('early abort: root degree')
-
-        return count
-
-    # early abort by depth
-    if (nx.eccentricity(T, rootT) > nx.eccentricity(S, rootS)):
-
-        # print('early abort: max depth')
-
-        return count
-
-    seqT = depthDegreeSequence(T, rootT)
-    seqS = depthDegreeSequence(S, rootS)
-
-    for i in seqT.keys():
-        # early abort by number of nodes at each depth
-        if (len(seqT[i]) > len(seqS[i])):
-
-            # print('early abort: number of depth-k nodes')
-
-            return count
-
-        # early abort by node degree sequence at each depth
-        for k, v in enumerate(seqT[i]):
-            if (v > seqS[i][k]):
-
-                # print('early abort: depth-k degree sequence')
-
-                return count
-
-    # recursion
-    count = countMatchings(T, rootT, S, rootS)
-    return count
+# checks if a function satisfies a set of SBCs
+def checkSBCFunction(f, M):
+    for m in f.getDomain():
+        if (not checkSBC(m, f.applyMap(m), M, f)):
+            return False
+
+    return True

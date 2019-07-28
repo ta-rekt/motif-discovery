@@ -1,0 +1,102 @@
+\documentclass{article}
+
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage[margin=1in]{geometry}			%margins
+\usepackage{indentfirst}					%indentation
+\usepackage{listings}						%code
+\usepackage{amsmath}
+
+\setlength{\intextsep}{15pt plus 1.0pt minus 2.0pt}		%figure spacing inside text
+\linespread{1.6}
+
+\begin{document}
+
+\title{\bf{Progress report: Speeding up motif search}}
+\author{Tarek Tohme}
+\maketitle
+
+\section{Introduction}
+% what's the general vibe
+
+This report summarizes attempts made to speed up subgraph isomorphism in the context of network motif search. Many networks of interest in scientific literature are sparse, and have power-law or fat-tailed degree distributions, namely protein-protein interaction (PPI) networks, social networks, and the internet (add references). We take advantage of these practical assumptions to count instances of a graph $H$ in a network $G$ faster than would be possible otherwise. Our work improves on the Grochow-Kellis subgraph querying algorithm (add reference), and takes advantage of the onion decomposition proposed in (add reference). By onion-decomposing $H$ and $G$, we impose early aborts on isomorphism testing using a vertex's coreness and onion layer. We also use fast algorithms to count instances of trees in $H$'s 1-shell isomorphic to subtrees in $G$'s 1-shell, which, under our assumptions should comprise a significant portion of $G$. Finally, a dynamic variation of the I\textsc{somorphic}E\textsc{xtensions} routine proposed in (add reference), coupled with the onion decomposition, offers a further performance improvement. Note that many terms are borrowed from the k-core decomposition literature and the referenced papers in this report.
+
+\section{The onion decomposition}
+The onion decomposition removes vertices of degree at most k from a graph $G = (V, E)$, one pass at a time, with k going from 1 to $max\{N(v) | v \in V\}$. At each pass, it labels the removed vertices with the index of the pass, called the onion layer, and the coreness of the vertex, as defined by the k-core decomposition (add source).
+
+\subsection{Early abort by onion layer and coreness}
+If there exists a subgraph $H' = (V_{H'}, E_{H'})$ of $G$ isomorphic to H, it is easy to see that an onion decomposition on $G$ cannot label a vertex $v' \in V_{H'}$ with an onion layer less than that of its image $v \in V_H$. We can therefore rule out the possibility of isomorphism between $H$ and a subgraph of $G$ early on if some vertex in $H$ has a greater onion layer than the node it would map to in $G$.
+
+    We can also use coreness for aborting a candidate isomorphism early. First notice that a vertex in a graph's $k$-shell can have at most $k$ neighbors in the $k+1$-core. Otherwise, it wouldn't be removed from the $k$-shell when the $k$-core decomposition (or the onion decomposition) is making passes to remove nodes of degree at most $k$, and hence would not be in the $k$-shell. By the same reasoning, a vertex in the $k+1$-core must have at least $k+1$ neighbors in the $k+1$-core. Because of this, mapping a vertex in $H$'s $k+1$-core to a vertex in some shell of $G$ with coreness less than $k$ violates the conditions for induced isomorphism.
+
+\subsection{Counting subtrees in the 1-shell}
+% if a subtree is attached to the 2-core in G and another in H, run them through the subtree
+% counting algorithm to save time
+The 1-shell of a graph consists of trees each having one vertex adjacent with the 2-core. Performing an onion decomposition on $H$ and $G$ reveals these trees, if they exist, and enables us to run them through a subtree-counting algorithm that finds instances of a query tree $T$ in a larger tree $S$ much faster than a regular subgraph isomorphism algorithm can.
+
+\subsubsection{Using matrix permanents}
+% prove that counting subtree isomorphism is #P-complete by reducing from bipartite matching
+Here we show that counting subtrees of a tree $S$ isomorphic to $T$ is \#P-complete via \#B\textsc{ipartite}M\textsc{atchings}, the problem of counting matchings in a bipartite graph $B=(R, L)$ that map all of $R$ to a subset of $L$, which is equivalent to \#P\textsc{erfect}M\textsc{atchings}, proved \#P-complete in Valiant (add source).
+\\
+\\
+\textsc{theorem 1:} \quad Counting subtrees of $S$ that are isomorphic to $T$ is \#P-complete.
+\\
+\textsc{proof:} % written in motifs (17)
+\\
+\\
+We can therefore count isomorphic instances of $T_i$ in $S_i$ at every level recursively by computing the permanent of the biadjacency matrix of $B$. One hurdle we still have to face is correcting for double-counting symmetric instances. % We can easily achieve this by doing symmetry-breaking with sorted preorder strings on the subtrees (not sure if this works).
+
+\subsubsection{Using bipartite matching elimination}
+% show how to count the number of matchings in a bipartite graph by counting conflicting matchings,
+% and subtracting that from the number of possible assignments
+The following is an alternative to computing the permanent for counting bipartite matchings that takes advantage of some structure in the bipartite graph. The main idea is that the number of matchings is the number of assignments that contain conflicting (adjacent) edges subtracted from the total number of unconstrained assignments of the vertices in $R$ to a subset of $L$, regardless of conflicts. We can compute the number of matchings ruled out by conflicts quickly. The tricky part is correcting for assignments that are ruled out by one or more conflicts.
+
+\subsection{Ear decomposition in the 2-core}
+% what you tried to do, why it failed. explain the ear-towers, compressed descriptions, and problems that arose
+The ear decomposition (add source) was suspected to enable speed improvements compared to generic subgraph isomorphism.
+
+\section{Dynamic algorithm for finding isomorphic extensions}
+% explain how to find the exclusive k-neighborhood dynamically
+The I\textsc{somorphic}E\textsc{xtensions} routine proposed in Grochow and Kellis' algorithm works by recursively extending a given partial map $f:D \mapsto R$ between $H$ and $G$ while preserving induced isomorphism, where $D \subset V_H$ and $R \subset V$. First, from the neighborhood of $D$, it selects the most constrained vertex $m$ in $V_H$; among vertices with the most already mapped neighbors, it chooses the vertices with highest degree and among those, the one with highest degree sequence. This is done to maximize the chances of ruling out non-isomorphic mappings early on in the recursion. Then, it  goes through all neighboring vertices of $R$ in $V$ and tests for isomorphism with $m$ on each one.
+
+    Profiling a python implementation of this function showed that it spends most of its time computing the most constrained node of $H$, and looping through all neighboring vertices of $f$'s range testing for isomorphism. Here we show how the latter task can be accomplished much faster with a dynamic algorithm, and the former becomes unnecessary with a little help from the onion decomposition.
+    
+    First, note that the definition of induced isomorphism imposes that any candidate vertex $n$ in $V$ for an isomorphic extension of $f$ must have exactly the same number of neighbors with $R$ as $m$ has with $D$, that number being denoted $k$. Therefore, we can restrict the search for potential candidates for an extension to the subset of the neighborhood of $R$ in $V$ where vertices have exactly $k$ adjacent vertices in $R$. We call that subset of $R$'s neighborhood the $k$-club of $R$, denoted $C_k(R)$, where $\displaystyle\bigcup_{i \leq |R|}C_i(R) = N(R)$. Then, we would have to verify that these $k$ adjacent vertices are the images of the neighbors of $m$ in $D$, and that would be sufficient for induced isomorphism. We can compute $C_k(R)$ by memoization using the following equation, which is the basis for the dynamic algorithm:
+\begin{equation}
+C_{k+1}(R \cup \{v\}) = C_{k+1}(R) \cup \big(C_k(R) \cap N(v)\big) \setminus \big( C_{k+1}(R) \cap N(V)\big)
+\end{equation}
+    Note that if $k$ is the maximum number of adjacent edges $R$ has with any vertex in its neighborhood, then $C_{k+1}(R) = \emptyset$ and the above equation reduces to the middle term. (Figure 1) shows how these values would be stored in a table, just for illustration purposes. The algorithm stores these values in a tree, as will be elaborated in the following section. 
+    
+\subsection{Dynamic search tree}
+% explain how the data structure works, it's pretty simple
+The dynamic algorithm proceeds iteratively. First, a tree data structure is initialized with a given vertex $g$ of $V$ as its root (for clarity, vertices refer to elements of $V$, and nodes refer to elements of the tree). Each node of the tree is indexed by an ordered list of the vertices of $V$ traversed by the algorithm up to $v$, the most recently added node. It is therefore a search tree where nodes represent paths of successive isomorphic extensions in $V$. Each node also stores a row of the table shown in (Figure 1). At each iterative step, leaves of that tree represent the $R$'s of all valid partial mappings that have been found so far. The algorithm loops through the leaves, and for each one, computes values of $C_i(R), i \in \{1, \dots, l\}$, from the elements stored in its parent nodes, using equation (1). These values are inputted to the node's own row. By knowing $k$, the number of neighbors of $m$ in $D$, we read $C_k(R)$ from our newly computed row elements and that represents the candidates for isomorphic extensions in $V$. Computing the row elements $C_i(R \cup \{v\})$ takes $O((|C_i(R)| + |N(v)|) \times l)$ using dictionary-like implementations of sets. Here $l$ represents the maximum number of neighbors a candidate node $v$ can have with a partial range $R$. As we will see in the following section, traversing the nodes of $H$ and $G$ a certain way gives additional improvements on performance.
+
+\subsection{Taking advantage of the onion decomposition}
+% traversing H in reverse onion layer order and G in onion layer order guaranteed the most early aborts by onion layer and 
+% coreness, and makes H's largest coreness the upper bound on the number of steps to compute each new entry in the dynamic tree
+Since the onion decomposition works by successively removing vertices of degree at most $k$ from a graph, traversing vertices in reverse onion-layer order guarantees that every encountered vertex has at most $k$ neighbors with the set of vertices traversed so far. By traversing $H$ in reverse onion layer, we impose an upper bound on $l$ equal to the highest value of the coreness of $H$'s vertices, which according to the assumptions made in the introduction, won't be too intimidating. Also, the computation of most constrained vertices is now unnecessary.
+
+    What's more, following up on our discussion in section 2.1, if we traverse the vertices of $G$ in onion-layer order, we guarantee the most early aborts by onion layer and coreness, saving time and memory in unnecessary isomorphism tests.
+
+
+\section{Results}
+% - speed comparison of regular, regular + subtree counting, dynamic, dynamic + subtree counting
+(Coming soon: speed comparison of GK, GK + \#subtrees, GK-dynamic, GK-dynamic + \#subtrees)
+
+\section{Remaining work}
+% - finish what you started
+% - try traversing H in reverse topological sort order
+% - implement library in C, documentation
+
+\subsection{Finishing current implementations and profiling}
+At the time of this writing the Grochow-Kellis algorithm was implemented in Python and passes all provided test cases. However, it fails to run correctly on trees. The subtree counting algorithm was implemented and tested. It works correctly, albeit without symmetry-breaking. The dynamic Grochow-Kellis algorithm is in the debugging phase. All algorithms are expected to be ready for profiling two weeks from the date on this report.
+
+\subsection{Faster symmetry-breaking checking}
+The symmetry-breaking technique developed in Grochow-Kellis (add source) guarantees that instances of $H$ in $G$ are only found once by ruling out symmetric instances as they are encountered. However, it could still take $O(|V_H|)$ steps to recognize an instance symmetric to one we've already found. A moderate speedup could be achieved if the vertices of H were traversed in a certain order. Namely, some vertices have more symmetry-breaking conditions they are part of than others (see Grochow-Kellis). By sorting the vertices in reverse topological order, where an order relation is a symmetry-breaking condition between two vertices, we'd eliminate symmetries in the fastest possible way.
+
+\subsection{C implementation and software documentation}
+The algorithms discussed in this report were all implemented in Python. In the (near) future, they will be translated to C and documented appropriately, for possible release as a software library.
+
+
+
+\end{document}
