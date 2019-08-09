@@ -488,12 +488,8 @@ def findSubgraphInstances(H, G, withSBC=True):
         M = symmetryConditions(aut)
 
         # print()
-        #
         # print('M: ',end='')
         # print(M)
-
-        eqClasses = findEquivalenceClasses(aut)
-        HE = [t for t in sorted(eqClasses.keys())]
 
         # print('equivalence classes: ',end='')
         # print(eqClasses)
@@ -505,12 +501,11 @@ def findSubgraphInstances(H, G, withSBC=True):
         J = G
 
     else:
-        HE = [i for i in H.nodes()]
         M = None
 
 
     for g in sorted(list(G.nodes())):
-        for h in HE:
+        for h in H:
 
             # print('HE:', HE)
             # print('h:',h,'g:',g)

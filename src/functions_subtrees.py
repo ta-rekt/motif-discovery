@@ -12,7 +12,10 @@ import collections as co
 import random as rnd
 import permanent as per
 import operator
+from operator import mul
 import itertools as it
+from itertools import groupby
+import math
 
 count = 0
 
@@ -498,13 +501,8 @@ def findSubgraphInstances(H, G, withSBC=True):
         M = symmetryConditions(aut)
 
         # print()
-        #
         # print('M: ',end='')
         # print(M)
-
-        eqClasses = findEquivalenceClasses(aut)
-        HE = [t for t in eqClasses.keys()]
-
         # print('HE: ', HE)
         # print('equivalence classes: ',end='')
         # print(eqClasses)
@@ -513,7 +511,6 @@ def findSubgraphInstances(H, G, withSBC=True):
         sortedDegreeG = sortDegrees(G, G.nodes())
         mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
         G = nx.relabel_nodes(G, mapping)
-
         J = G
 
         # print('roots of H')
@@ -525,12 +522,11 @@ def findSubgraphInstances(H, G, withSBC=True):
         #     print(G.node[x]['is_root'])
 
     else:
-        HE = [i for i in H.nodes()]
         M = None
 
 
     for g in sorted(list(G.nodes())):
-        for h in HE:
+        for h in H:
 
             # print('HE:', HE)
             # print('h:',h,'g:',g)
@@ -557,7 +553,7 @@ def findSubgraphInstances(H, G, withSBC=True):
                     for j in r_g:
                         Sj = subtree(G, j, g)
                         Sj.add_edge(j, g)
-                        S.add_edges_from(Si.edges())
+                        S.add_edges_from(Sj.edges())
 
                     trees += countRootedSubtrees(T, h, S, g)
 
@@ -825,22 +821,28 @@ def onionDecompose(G):
 def randomTree(n, seed):
     rnd.seed(seed)
 
-    T = nx.Graph()
-    T.add_node(0)
+    S = nx.Graph()
+    S.add_node(0)
 
     for i in range(1, n):
         r = rnd.randint(0,i-1)
-        T.add_edge(r, i)
+        S.add_edge(r, i)
 
-    return T
+    sortedDegreeS = sortDegrees(S, S.nodes())
+    mapping = dict(zip(sortedDegreeS['node'], range(len(S))))
+    S = nx.relabel_nodes(S, mapping)
+
+    return S
 
 
 # returns the preorder traversal sequence of a tree. for initial call, parent = root
-def compressTree(T, node, parent):
+def compressTree(T, node, parent, dict = {}):
     string = ''
+    root = -1
 
     if(node == parent):
         children = set(T[parent])
+        root = node
 
     else:
         children = set(T[node]).difference({parent})
@@ -848,12 +850,18 @@ def compressTree(T, node, parent):
     if(children):
         for n in children:
             s = '1'
-            s = s + compressTree(T, n, node)
+            substring = compressTree(T, n, node, dict)
+            dict[n] = substring
+            s = s + substring
             s = s + '0'
             string = string + s
 
     else:
         return ''
+
+    if (root > -1):
+        dict[root] = string
+        return dict
 
     return string
 
@@ -948,7 +956,7 @@ def drawBipartiteGraph(F, indices):
 
 # recursively counts the matchings of a bipartite graph G, obtained
 # from subtree isomorphisms between subtrees of T and subtrees of S
-def countMatchings(T, rootT, S, rootS, M, call=0, init=True):
+def countMatchings(T, rootT, S, rootS, preorderTree={}, init=True):
     # print('countmatchings')
 
     parentT = rootT
@@ -956,6 +964,18 @@ def countMatchings(T, rootT, S, rootS, M, call=0, init=True):
     childrenT = set(T[rootT]).difference({rootT})
     childrenS = set(S[rootS]).difference({rootS})
     G = nx.Graph()
+    m = 1
+
+    # preorderTree is a dict: keys are roots of each subtree, values are their preorder strings
+    if (init):
+        preorderTree = compressTree(T, rootT, rootT)
+
+    preorderChildren = sorted([preorderTree[i] for i in childrenT])
+    classSizes = [len(list(group)) for key, group in groupby(preorderChildren)]
+
+    for val in classSizes:
+        if (val > 1):
+            m *= math.factorial(val)
 
     # base case
     if (not childrenT):
@@ -967,49 +987,18 @@ def countMatchings(T, rootT, S, rootS, M, call=0, init=True):
     indices = {}
     left = set()
 
-    # symmetryMatrix = {}
-
-    # # find the isomorphic pairs of 1-subtrees to skip adding them twice to the bipartite graph
-    # for key_i, i in enumerate(childrenT):
-    #     symmetryMatrix[i] = {}
-    #
-    #     for key_j, j in enumerate(childrenT):
-    #         if (key_i >= key_j):
-    #             Ti = subtree(T, i, rootT)
-    #             preorder_i = compressTree(Ti, i, i)
-    #             preorder_j = compressTree(Tj, j, j)
-    #
-    #             if (preorder_i == preorder_j):
-    #                 symmetryMatrix[i][j] = 1
-    #
-    #             else:
-    #                 symmetryMatrix[i][j] = 0
-
-    # create a dict of maps, one for each possible mapping of Ti into Tj, then check
-    # which of them verify SBC
-    dict = {}
     l = len(childrenT)
     r = len(childrenS)
-
-    for x in range(r*l):
-        dict[x] = Map([])
-
-    x = 0
 
     for key_i, i in enumerate(childrenT):
         for key_j, j in enumerate(childrenS):
             Ti = subtree(T, i, rootT)
             Sj = subtree(S, j, rootS)
 
-            call2 = call + 1
-
-            k = countMatchings(Ti, i, Sj, j, M, call2, False)
+            k = countMatchings(Ti, i, Sj, j, preorderTree, False)
 
             if (k > 0):
-                dict[x].extend([i, j])
-
-                if (checkSBC(i, j, M, f)):
-                    G.add_edge(key_i, key_j+len(childrenT), weight = k)
+                G.add_edge(key_i, key_j+len(childrenT), weight = k)
 
             indices[key_j+len(childrenT)] = str(j) + 'r'
 
@@ -1018,20 +1007,19 @@ def countMatchings(T, rootT, S, rootS, M, call=0, init=True):
 
     K = nx.relabel_nodes(G, indices)
 
-    if (init):
-        drawBipartiteGraph(K, left)
-
     mat = nx.to_numpy_matrix(G, [i for i in range(l+r)])
-
     matchings = rectPermanent(mat, l, r)
 
-    return matchings
+    # if (init):  # base call
+        # drawBipartiteGraph(K, left)
+
+    return matchings / m
 
 
 # recursively find the number of induced subtrees of H's depth-1
 # branches and apply bipartite matching to count the number of
 # possible matches.
-def countRootedSubtrees(T, rootT, S, rootS, M=None):
+def countRootedSubtrees(T, rootT, S, rootS):
     count = 0
 
     # early abort by root degree
@@ -1067,8 +1055,10 @@ def countRootedSubtrees(T, rootT, S, rootS, M=None):
 
                 return count
 
-    # f = Map([rootT, rootS])
+    # preorder string of T
+    preorder = compressTree(T, rootT, rootT)
 
     # recursion
-    count = countMatchings(T, rootT, S, rootS, M)
+    count = countMatchings(T, rootT, S, rootS, preorder)
+
     return count

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2017.11.1)  30 JUL 2019 02:57
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2017.11.1)  6 AUG 2019 14:42
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -406,15 +406,20 @@ Underfull \hbox (badness 10000) in paragraph at lines 55--57
 
  []
 
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--61
+
+ []
+
 [3] [4] [5] [6] (./motif-finding report.aux) ) 
 Here is how much of TeX's memory you used:
  5414 strings out of 492995
  78978 string characters out of 6132704
- 147824 words of memory out of 5000000
+ 148824 words of memory out of 5000000
  8907 multiletter control sequences out of 15000+600000
  11650 words of font info for 41 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 42i,6n,40p,1493b,272s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 42i,6n,40p,1487b,272s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2017/texmf-di
 st/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2017/texmf-dis
 t/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2017/texmf-dist
@@ -429,7 +434,7 @@ ype1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2017/texmf-dist/fonts/type
 /public/mathabx-type1/matha10.pfb></usr/local/texlive/2017/texmf-dist/fonts/typ
 e1/public/mathabx-type1/matha5.pfb></usr/local/texlive/2017/texmf-dist/fonts/ty
 pe1/public/mathabx-type1/matha7.pfb>
-Output written on "motif-finding report.pdf" (6 pages, 3052296 bytes).
+Output written on "motif-finding report.pdf" (6 pages, 3055616 bytes).
 PDF statistics:
  78 PDF objects out of 1000 (max. 8388607)
  54 compressed objects within 1 object stream
