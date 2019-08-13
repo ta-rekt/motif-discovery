@@ -480,20 +480,7 @@ def findSubgraphInstances(H, G, withSBC=True):
 
         aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
 
-        # print()
-        # print('##################################################')
-        # print('aut: ',end='')
-        # print([i.getMap() for i in aut])
-
         M = symmetryConditions(aut)
-
-        # print()
-        # print('M: ',end='')
-        # print(M)
-
-        # print('equivalence classes: ',end='')
-        # print(eqClasses)
-
         # sort nodes of G by degree
         sortedDegreeG = sortDegrees(G, G.nodes())
         mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
@@ -506,16 +493,9 @@ def findSubgraphInstances(H, G, withSBC=True):
 
     for g in sorted(list(J.nodes())):
         for h in H:
-
-            # print('HE:', HE)
-            # print('h:',h,'g:',g)
-            # print('######### NEW NODE #########')
-
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
                 iso = isomorphicExtensions(f, H, G, 1, M)  # M
-
-                # print([k.getMap() for k in iso])
 
                 if(type(iso) == type(f)):  # sometimes iso is single element
                     instances.append(iso)

@@ -49,42 +49,42 @@ class Map():
 
         # checking for duplicates within extension
         for i in temp:
-            if (i['rangeNode'] >= 0):
-                l = [m for m,n in enumerate(temp) if tuple(n)==tuple(i)]
 
-                if (len(l) > 1):
-                    # print('cannot extend function. duplicate element in extension')
-                    self.map = map
-                    return False
+            l = [m for m,n in enumerate(temp) if tuple(n)==tuple(i)]
 
-                for j in temp:
+            if (len(l) > 1):
+                # print('cannot extend function. duplicate element in extension')
+                self.map = map
+                return False
 
-                    if(np.array_equal(i, j) == False):
+            for j in temp:
 
-                        if (i['domainNode'] == j['domainNode']):
-                            # print('cannot extend function. duplicate domain node in extension')
-                            self.map = map
-                            return False
-
-                        if (i['rangeNode'] == j['rangeNode']):
-                            # print('cannot extend function. duplicate range node in extension')
-                            self.map = map
-                            return False
-
-                # checking for duplicates between extension and partial map
-                for j in self.map:
+                if(np.array_equal(i, j) == False):
 
                     if (i['domainNode'] == j['domainNode']):
-                        # print('duplicate domain node. using new node.')
-                        duplicate = i['domainNode']
-                        b = [x for k,x in enumerate(self.map) if self.map['domainNode'][k] != duplicate]
-                        self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+                        # print('cannot extend function. duplicate domain node in extension')
+                        self.map = map
+                        return False
 
-                    elif (i['rangeNode'] == j['rangeNode']):
-                        # print('duplicate range node. using new node.')
-                        duplicate = i['rangeNode']
-                        b = [x for k,x in enumerate(self.map) if self.map['rangeNode'][k] != duplicate]
-                        self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+                    if (i['rangeNode'] == j['rangeNode']):
+                        # print('cannot extend function. duplicate range node in extension')
+                        self.map = map
+                        return False
+
+            # checking for duplicates between extension and partial map
+            for j in self.map:
+
+                if (i['domainNode'] == j['domainNode']):
+                    # print('duplicate domain node. using new node.')
+                    duplicate = i['domainNode']
+                    b = [x for k,x in enumerate(self.map) if self.map['domainNode'][k] != duplicate]
+                    self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+
+                elif (i['rangeNode'] == j['rangeNode']):
+                    # print('duplicate range node. using new node.')
+                    duplicate = i['rangeNode']
+                    b = [x for k,x in enumerate(self.map) if self.map['rangeNode'][k] != duplicate]
+                    self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
         self.map = np.concatenate((self.map, temp))
 
@@ -175,10 +175,10 @@ def canSupport(h, g, H, G):
 
         minn = min(len(neighborsH), len(neighborsG))
 
-        for i in range(minn):
-            if (neighborsG['degree'][i] < neighborsH['degree'][i]):
-                # print("rejected because of sequence")
-                return False
+        # for i in range(minn):
+        #     if (neighborsG['degree'][i] < neighborsH['degree'][i]):
+        #         print("rejected because of sequence")
+        #         return False
 
         if (H.node[h]['coreness'] > G.node[g]['coreness']):
                 # print("rejected because of coreness")
@@ -494,6 +494,7 @@ def findSubgraphInstances(H, G, withSBC=True):
     # instances of H found in G
     instances = []
     withTrees = 0
+    treeCount = 0
 
     # relabel input graphs by order of increasing degree
     G = relabelByDegree(G)
@@ -503,7 +504,10 @@ def findSubgraphInstances(H, G, withSBC=True):
     onionDecompose(G)
     onionDecompose(H)
 
-    attributes = G.nodes[1].keys()
+    attributesG = G.nodes[0].keys()
+    attributesH = H.nodes[0].keys()
+
+    toRemoveG = []
 
     if (len(H) > len(G)):
         return 0
@@ -514,43 +518,107 @@ def findSubgraphInstances(H, G, withSBC=True):
         K = nx.Graph()
         K.add_edges_from(H.edges())
 
-        for name in H.nodes[1].keys():
+        for name in attributesH:
             attr = nx.get_node_attributes(H, name)
             nx.set_node_attributes(K, attr, name)
 
         aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
         M = symmetryConditions(aut)
+        gNodes = list(G.nodes())
+        # print(M)
 
+        for g in gNodes:
+            print(gNodes)
+            print(G.nodes())
+            if (g in G.nodes()):
+                r_g = G.nodes[g]['is_root']
+                if (r_g):
+                    for h in H:
+                        r_h = H.nodes[h]['is_root']
+                        if (r_h and canSupport(h, g, H, G)):
+                            S = nx.Graph()
+
+                            for j in r_g:
+                                Sj = subtree(G, j, g)
+                                Sj.add_edge(j, g)
+                                S.add_edges_from(Sj.edges())
+
+                            J = nx.Graph()
+                            J.add_edges_from(G.edges())
+
+                            for name in attributesG:
+                                attr = nx.get_node_attributes(G, name)
+                                nx.set_node_attributes(J, attr, name)
+
+                            toRemoveG = set(S.nodes())
+                            toRemoveG.remove(g)
+
+                            for s in toRemoveG:
+                                J.remove_node(s)
+
+
+                            T = nx.Graph()
+
+                            for i in r_h:
+                                Ti = subtree(H, i, h)
+                                Ti.add_edge(i, h)
+                                T.add_edges_from(Ti.edges())
+
+                            treeCount = countRootedSubtrees(T, h, S, g)
+                            print(h, g, treeCount)
+
+                            # make separate graphs
+                            K = nx.Graph()
+                            K.add_edges_from(H.edges())
+
+                            for name in H.nodes[1].keys():
+                                attr = nx.get_node_attributes(H, name)
+                                nx.set_node_attributes(K, attr, name)
+
+                            toRemoveH = set(T.nodes())
+                            toRemoveH.remove(h)
+                            # print('to remove from G: ', toRemoveG)
+                            # print('to remove from H: ', toRemoveH)
+                            for t in toRemoveH:
+                                K.remove_node(t)
+
+                            f = Map([(h, g)])
+                            iso = isomorphicExtensions(f, K, J, 0, M)
+
+                            withTrees += len(iso) * treeCount
+                            print([i.getMap() for i in iso])
+                            print(treeCount)
+                            
+                            for s in toRemoveG:
+                                print('s: ', s)
+                                G.remove_node(s)
+
+            gNodes = list(G.nodes())
     else:
         M = None
 
     # traverse G in order of degree, or label (same)
     for g in sorted(list(G.nodes())):
-        if (not (M and G.nodes[g]['coreness'] == 1)):
-            for h in H:
-                if (canSupport(h, g, H, G)):
-                    J = nx.Graph()
-                    J.add_edges_from(G.edges())
+        for h in H:
+            if (canSupport(h, g, H, G)):
 
-                    for name in attributes:
-                        attr = nx.get_node_attributes(G, name)
-                        nx.set_node_attributes(J, attr, name)
+                f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
+                iso = isomorphicExtensions(f, H, G, 0, M)  # M
 
-                    f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                    iso = isomorphicExtensions(f, H, J, 0, M)  # M
+                if(type(iso) == type(f)):  # sometimes iso is an empty list
+                    instances.append(iso)
+                else:
+                    [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
-                    if(type(iso) == type(f)):  # sometimes iso is an empty list
-                        instances.append(iso)
-                    else:
-                        [instances.append(i) for i in iso]   # instances might contain duplicate maps
-
-            G.remove_node(g)
+        G.remove_node(g)
 
     if(H.edges() == G.edges()):
         instances = bijectionsOnly(instances)
 
     if (withSBC):
-        count = sum([f.getMult() for f in instances])
+        count = withTrees + len(instances)
+        # print([(i.getMap(), i.getMult()) for i in instances])
+
         return count
 
     return instances
@@ -571,15 +639,18 @@ def isomorphicExtensions(f, H, G, call=0, M=None): # M
     neighborsR = set()
     neighborsD = set()
     D = f.getDomain()
-    R = set(f.getRange()).intersection(G)
+    R = f.getRange()
+    # print(f.getMap())
 
     if(set(D) == set(H.nodes())):
         f.extend(list(np.sort(f.getMap(), order='domainNode')))
 
         return f
 
+    # print('H: ', H.nodes())
+    # print('D: ', D)
     m = mostConstrainedNode(D, H)
-    r_h = H.nodes[m]['is_root']
+    # r_h = H.nodes[m]['is_root']
 
     # print('domain extension (m): ', end='')
     # print(m)
@@ -603,7 +674,7 @@ def isomorphicExtensions(f, H, G, call=0, M=None): # M
 
     # check for induced isomorphism.
     for n in neighborsR:
-        r_g = G.nodes[n]['is_root']
+        # r_g = G.nodes[n]['is_root']
 
         # print('partial map: ')
         # print(np.vstack(f.getMap()))
@@ -616,6 +687,8 @@ def isomorphicExtensions(f, H, G, call=0, M=None): # M
         neighbMinD = out[0]
         f_neighbMinD = out[1]
         neighbNinR = out[2]
+
+        # attributes = G.nodes[1].keys()
 
         # print('neighbors of m in D: ', end='')
         # print(neighbMinD)
@@ -632,30 +705,55 @@ def isomorphicExtensions(f, H, G, call=0, M=None): # M
                 fp.setMult(f.getMult())
 
                 # if we hit two trees, count them and continue extending f elsewhere
-                if (M and r_g and r_h):
-                    S = nx.Graph()
-                    T = nx.Graph()
+                # if (M and r_g and r_h):
+                #
+                #     J = nx.Graph()
+                #     J.add_edges_from(G.edges())
+                #     K = nx.Graph()
+                #     K.add_edges_from(H.edges())
+                #
+                #     for name in attributes:
+                #         attr = nx.get_node_attributes(G, name)
+                #         nx.set_node_attributes(J, attr, name)
+                #     for name in attributes:
+                #         attr = nx.get_node_attributes(H, name)
+                #         nx.set_node_attributes(K, attr, name)
+                #
+                #     S = nx.Graph()
+                #     T = nx.Graph()
+                #
+                #     for j in r_g:
+                #         Sj = subtree(J, j, n)
+                #         Sj.add_edge(j, n)
+                #         S.add_edges_from(Sj.edges())
+                #         J.remove_edge(j, n)
+                #
+                #     for i in r_h:
+                #         Ti = subtree(K, i, m)
+                #         Ti.add_edge(i, m)
+                #         T.add_edges_from(Ti.edges())
+                #         K.remove_edge(i, m)
+                #
+                #     toAdd = set(T.nodes())
+                #     toAdd.remove(m)
+                #
+                #     # sNodes = [val for key, val in enumerate(S) if key in range(len(toAdd))]
+                #
+                #     treeCount = countRootedSubtrees(T, m, S, n)
+                #     # fp.extend([(val, sNodes[key]) for key, val in enumerate(toAdd)])
+                #
+                #     mult = f.getMult()
+                #     fp.setMult(mult*treeCount)
+                #
+                #     newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+                #     fp.extend([newNode])
+                #
+                #     call2 = call + 1
+                #     print('pimp')
+                #     iso = isomorphicExtensions(fp, K, J, call2, M)
 
-                    for j in r_g:
-                        Sj = subtree(G, j, n)
-                        Sj.add_edge(j, n)
-                        S.add_edges_from(Sj.edges())
-                        # G.remove_edge(j, n)
 
-                    for i in r_h:
-                        Ti = subtree(H, i, m)
-                        Ti.add_edge(i, m)
-                        T.add_edges_from(Ti.edges())
-
-                    toAdd = set(T.nodes())
-                    toAdd.remove(m)
-
-                    treeCount = countRootedSubtrees(T, m, S, n)
-                    fp.extend([(val, -1) for val in toAdd])
-
-                    mult = f.getMult()
-                    fp.setMult(mult*treeCount)
-
+                # else:
 
                 newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
                 fp.extend([newNode])
