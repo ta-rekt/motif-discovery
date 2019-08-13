@@ -150,9 +150,9 @@ class Map():
 def canSupport(h, g, H, G):
     # print('##### CAN SUPPORT CALL #####')
     # print('query node: ', end='')
-    # print(h)
+    # print(h, H[h])
     # print('network node: ', end='')
-    # print(g)
+    # print(g, G[g])
 
     if(len(G[g]) >= len(H[h])):
         neighborsH = sortDegrees(H, H[h])
@@ -504,7 +504,7 @@ def findSubgraphInstances(H, G, withSBC=True):
         M = None
 
 
-    for g in sorted(list(G.nodes())):
+    for g in sorted(list(J.nodes())):
         for h in H:
 
             # print('HE:', HE)
@@ -527,8 +527,8 @@ def findSubgraphInstances(H, G, withSBC=True):
     if(H.edges() == G.edges()):
         instances = bijectionsOnly(instances)
 
-    # if(withSBC):
-    #     return len(instances)
+    if(withSBC):
+        return len(instances)
 
     return instances
 

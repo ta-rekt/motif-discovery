@@ -29,9 +29,9 @@ count = 0
 # node is the same as some existing node, the function replaces the old node with the new node.
 class Map():
 
-    def __init__(self, init):   # init is a list containing the initial nodes of the partial map
+    def __init__(self, init, multiplier=1):   # init is a list containing the initial nodes of the partial map
         self.map = np.array(init, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
-
+        self.multiplier = multiplier
 
     def extend(self, extension):   # extends the partial map by a list of tuples called extension
         # print('##### EXTENDING PARTIAL MAP #####')
@@ -49,41 +49,42 @@ class Map():
 
         # checking for duplicates within extension
         for i in temp:
-            l = [m for m,n in enumerate(temp) if tuple(n)==tuple(i)]
+            if (i['rangeNode'] >= 0):
+                l = [m for m,n in enumerate(temp) if tuple(n)==tuple(i)]
 
-            if (len(l) > 1):
-                # print('cannot extend function. duplicate element in extension')
-                self.map = map
-                return False
+                if (len(l) > 1):
+                    # print('cannot extend function. duplicate element in extension')
+                    self.map = map
+                    return False
 
-            for j in temp:
+                for j in temp:
 
-                if(np.array_equal(i, j) == False):
+                    if(np.array_equal(i, j) == False):
+
+                        if (i['domainNode'] == j['domainNode']):
+                            # print('cannot extend function. duplicate domain node in extension')
+                            self.map = map
+                            return False
+
+                        if (i['rangeNode'] == j['rangeNode']):
+                            # print('cannot extend function. duplicate range node in extension')
+                            self.map = map
+                            return False
+
+                # checking for duplicates between extension and partial map
+                for j in self.map:
 
                     if (i['domainNode'] == j['domainNode']):
-                        # print('cannot extend function. duplicate domain node in extension')
-                        self.map = map
-                        return False
+                        # print('duplicate domain node. using new node.')
+                        duplicate = i['domainNode']
+                        b = [x for k,x in enumerate(self.map) if self.map['domainNode'][k] != duplicate]
+                        self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
-                    if (i['rangeNode'] == j['rangeNode']):
-                        # print('cannot extend function. duplicate range node in extension')
-                        self.map = map
-                        return False
-
-            # checking for duplicates between extension and partial map
-            for j in self.map:
-
-                if (i['domainNode'] == j['domainNode']):
-                    # print('duplicate domain node. using new node.')
-                    duplicate = i['domainNode']
-                    b = [x for k,x in enumerate(self.map) if self.map['domainNode'][k] != duplicate]
-                    self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
-
-                elif (i['rangeNode'] == j['rangeNode']):
-                    # print('duplicate range node. using new node.')
-                    duplicate = i['rangeNode']
-                    b = [x for k,x in enumerate(self.map) if self.map['rangeNode'][k] != duplicate]
-                    self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+                    elif (i['rangeNode'] == j['rangeNode']):
+                        # print('duplicate range node. using new node.')
+                        duplicate = i['rangeNode']
+                        b = [x for k,x in enumerate(self.map) if self.map['rangeNode'][k] != duplicate]
+                        self.map = np.array(b, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
         self.map = np.concatenate((self.map, temp))
 
@@ -145,6 +146,14 @@ class Map():
                 return self.map['rangeNode'][i]
         return -1
 
+    # sets the multiplier
+    def setMult(self, mult):
+        self.multiplier = mult
+
+    # gets the multiplier
+    def getMult(self):
+        return self.multiplier
+
 
 # returns true if g can support h (according to node degree and neighbor degree sequence)
 # and false otherwise.
@@ -154,9 +163,9 @@ class Map():
 def canSupport(h, g, H, G):
     # print('##### CAN SUPPORT CALL #####')
     # print('query node: ', end='')
-    # print(h)
+    # print(h, H[h])
     # print('network node: ', end='')
-    # print(g)
+    # print(g, G[g])
 
     if (len(G[g]) >= len(H[h])):
         neighborsH = sortDegrees(H, H[h])
@@ -172,12 +181,12 @@ def canSupport(h, g, H, G):
                 return False
 
         if (H.node[h]['coreness'] > G.node[g]['coreness']):
-            # print("rejected because of coreness")
-            return False
+                # print("rejected because of coreness")
+                return False
 
         if (H.node[h]['onion_layer'] > G.node[g]['onion_layer']):
-            # print("rejected because of onion layer")
-            return False
+                # print("rejected because of onion layer")
+                return False
 
         # print("can support")
         return True
@@ -293,17 +302,20 @@ def mostConstrainedNode(D, H):
 # finds the set of equivalence classes. returns a dict; keys are representative nodes
 # and values are equivalence classes
 # aut: set of automorphisms. must be a list of objects of type Map.
-def findEquivalenceClasses(aut):
+def findEquivalenceClasses(aut, M=None):
     eq = {}
 
-    for n in aut[0].getDomain():   # loop through all nodes in the domain (in order)
+    for m in aut[0].getDomain():   # loop through all nodes in the domain (in order)
         E = set()
 
         for f in aut:
-            E = E.union({f.applyMap(n)})   # gather all nodes that n can be mapped to in E
+            n = f.applyMap(m)
+
+            if (checkSBC(m, n, M, f)):
+                E = E.union({n})   # gather all nodes that n can be mapped to in E
 
         if (E not in eq.values()):
-            eq[n] = E
+            eq[m] = E
 
     return eq
 
@@ -458,6 +470,15 @@ def printSBC(m, n, M, f):
     print('f: ',end='')
     print(tuple(f.getMap()))
 
+# relabels a graph's edges in increasing degree order
+# H: a networkx graph
+def relabelByDegree(H):
+    sortedDegreeH = sortDegrees(H, H.nodes())
+    mappingH = dict(zip(sortedDegreeH['node'], range(len(H))))
+    H = nx.relabel_nodes(H, mappingH)
+
+    return H
+
 
 ###################################################################################
 ###################### grochow-kellis motif search algorithm ######################
@@ -468,113 +489,69 @@ def printSBC(m, n, M, f):
 # G: network to be queried
 def findSubgraphInstances(H, G, withSBC=True):
     # print('##### FIND SUBGRAPH INSTANCES #####')
-    J = nx.Graph()
-    J.add_edges_from(G.edges())
-
-    onionDecompose(G)
-    onionDecompose(H)
+    # print(withSBC)
 
     # instances of H found in G
     instances = []
-    trees = 0
+    withTrees = 0
+
+    # relabel input graphs by order of increasing degree
+    G = relabelByDegree(G)
+    H = relabelByDegree(H)
+
+    # adds onion_layer, coreness, traversal, and is_root attributes, useful for later
+    onionDecompose(G)
+    onionDecompose(H)
+
+    attributes = G.nodes[1].keys()
 
     if (len(H) > len(G)):
         return 0
 
     if(withSBC):
 
-        sortedDegreeH = sortDegrees(H, H.nodes())
-        mapping = dict(zip(sortedDegreeH['node'], range(len(H))))
-        H = nx.relabel_nodes(H, mapping)
-
+        # could be cleaned up
         K = nx.Graph()
-        K.add_nodes_from(H.nodes())
         K.add_edges_from(H.edges())
 
+        for name in H.nodes[1].keys():
+            attr = nx.get_node_attributes(H, name)
+            nx.set_node_attributes(K, attr, name)
+
         aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
-
-        # print()
-        # print('##################################################')
-        # print('aut: ',end='')
-        # print([i.getMap() for i in aut])
-
         M = symmetryConditions(aut)
-
-        # print()
-        # print('M: ',end='')
-        # print(M)
-        # print('HE: ', HE)
-        # print('equivalence classes: ',end='')
-        # print(eqClasses)
-
-        # sort nodes of G by degree
-        sortedDegreeG = sortDegrees(G, G.nodes())
-        mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
-        G = nx.relabel_nodes(G, mapping)
-        J = G
-
-        # print('roots of H')
-        # for x in H:
-        #     print(H.node[x]['is_root'])
-        #
-        # print('roots of G')
-        # for x in G:
-        #     print(G.node[x]['is_root'])
 
     else:
         M = None
 
-
+    # traverse G in order of degree, or label (same)
     for g in sorted(list(G.nodes())):
-        for h in H:
+        if (not (M and G.nodes[g]['coreness'] == 1)):
+            for h in H:
+                if (canSupport(h, g, H, G)):
+                    J = nx.Graph()
+                    J.add_edges_from(G.edges())
 
-            # print('HE:', HE)
-            # print('h:',h,'g:',g)
-            # print('######### NEW NODE #########')
+                    for name in attributes:
+                        attr = nx.get_node_attributes(G, name)
+                        nx.set_node_attributes(J, attr, name)
 
-            if(canSupport(h, g, H, G)):
-                r_g = False
-                r_h = False
-
-                if (withSBC):
-                    r_g = G.node[g]['is_root']  #r_g are the children of g on g's tree if g is a root
-                    r_h = H.node[h]['is_root']
-
-                if(r_g and r_h):
-                    T = nx.Graph()
-
-                    for i in r_h:
-                        Ti = subtree(H, i, h)
-                        Ti.add_edge(i, h)
-                        T.add_edges_from(Ti.edges())
-
-                    S = nx.Graph()
-
-                    for j in r_g:
-                        Sj = subtree(G, j, g)
-                        Sj.add_edge(j, g)
-                        S.add_edges_from(Sj.edges())
-
-                    trees += countRootedSubtrees(T, h, S, g)
-
-                else:
                     f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                    iso = isomorphicExtensions(f, H, G, 1, M)  # M
+                    iso = isomorphicExtensions(f, H, J, 0, M)  # M
 
-                    # print([k.getMap() for k in iso])
-
-                    if(type(iso) == type(f)):  # sometimes iso is single element
+                    if(type(iso) == type(f)):  # sometimes iso is an empty list
                         instances.append(iso)
                     else:
                         [instances.append(i) for i in iso]   # instances might contain duplicate maps
 
-        G.remove_node(g)
+            G.remove_node(g)
 
     if(H.edges() == G.edges()):
         instances = bijectionsOnly(instances)
 
     if (withSBC):
-        return len(instances) + trees
+        count = sum([f.getMult() for f in instances])
+        return count
 
     return instances
 
@@ -582,7 +559,7 @@ def findSubgraphInstances(H, G, withSBC=True):
 # finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
-def isomorphicExtensions(f, H, G, call, M = None): # M
+def isomorphicExtensions(f, H, G, call=0, M=None): # M
 
     # for c in range(call):
     #     print('   ',end='')
@@ -591,27 +568,18 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
     # print(call)
 
     isomorphisms = []
-    neighborsR = {None}
-    neighborsD = {None}
+    neighborsR = set()
+    neighborsD = set()
     D = f.getDomain()
-    R = f.getRange()
+    R = set(f.getRange()).intersection(G)
 
     if(set(D) == set(H.nodes())):
-
-        # for c in range(call):
-        #     print('   ',end='')
-        # print('INSTANCE FOUND ON CALL #', end='')
-        # print(call)
-
         f.extend(list(np.sort(f.getMap(), order='domainNode')))
-
-        # for c in range(call):
-        #     print('   ',end='')
-        # print(list(f.getMap()))
 
         return f
 
     m = mostConstrainedNode(D, H)
+    r_h = H.nodes[m]['is_root']
 
     # print('domain extension (m): ', end='')
     # print(m)
@@ -625,8 +593,8 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
         neighborsD = neighborsD.union(set(H[d]))
 
     # exclusive neighborhood
-    neighborsR = neighborsR.difference(set(R)).difference({None})
-    neighborsD = neighborsD.difference(set(D)).difference({None})
+    neighborsR = neighborsR.difference(set(R))
+    neighborsD = neighborsD.difference(set(D))
 
     # print('neighbors of partial range: ',end='')
     # print(neighborsR)
@@ -635,6 +603,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     # check for induced isomorphism.
     for n in neighborsR:
+        r_g = G.nodes[n]['is_root']
 
         # print('partial map: ')
         # print(np.vstack(f.getMap()))
@@ -657,14 +626,40 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
         if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
 
-            if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
-
-                # print('range extension valid')
+            if(checkSBC(m, n, M, f)):  # n conforms to symmetry-breaking conditions
 
                 fp = Map(list(f.getMap()))
-                newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+                fp.setMult(f.getMult())
 
+                # if we hit two trees, count them and continue extending f elsewhere
+                if (M and r_g and r_h):
+                    S = nx.Graph()
+                    T = nx.Graph()
+
+                    for j in r_g:
+                        Sj = subtree(G, j, n)
+                        Sj.add_edge(j, n)
+                        S.add_edges_from(Sj.edges())
+                        # G.remove_edge(j, n)
+
+                    for i in r_h:
+                        Ti = subtree(H, i, m)
+                        Ti.add_edge(i, m)
+                        T.add_edges_from(Ti.edges())
+
+                    toAdd = set(T.nodes())
+                    toAdd.remove(m)
+
+                    treeCount = countRootedSubtrees(T, m, S, n)
+                    fp.extend([(val, -1) for val in toAdd])
+
+                    mult = f.getMult()
+                    fp.setMult(mult*treeCount)
+
+
+                newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
                 fp.extend([newNode])
+
                 # print('called')
                 call2 = call + 1
                 iso = isomorphicExtensions(fp, H, G, call2, M)
@@ -717,36 +712,55 @@ def symmetryConditions(aut):
     # print(eqClasses)
 
     for n in HE:
-        np = n
-        A = aut
-        temp_eqClasses = eqClasses
+        if (n not in M.keys()):
+            np = n
+            A = aut
+            temp_eqClasses = eqClasses
 
-        while len(A) > 1:
-            # print('A before:')
-            # print([tuple(i.getMap()) for i in A])
+            # print(n)
 
-            Sp = temp_eqClasses[np]
-            Sp.remove(np)
-            M[np] = Sp
-            # print('M[',np,'] = ',Sp)
+            A = [f for f in A if checkSBCFunction(f, M)]
 
-            A = [f for f in A if f.applyMap(np) == np]
+            while (len(A) > 1):
 
-            # print('A after:')
-            # print([tuple(i.getMap()) for i in A])
+                # print(len(A))
+                # print('A before:')
+                # print([tuple(i.getMap()) for i in A])
 
-            temp_eqClasses = findEquivalenceClasses(A)
+                Sp = temp_eqClasses[np]
+                Sp.remove(np)
+                M[np] = Sp
 
-            maxx = 0
+                # print('M[',np,'] = ',Sp)
 
-            for k in temp_eqClasses.keys():
-                size = len(temp_eqClasses[k])
+                A = [f for f in A if f.applyMap(np) == np and checkSBCFunction(f, M)]
+                temp_eqClasses = findEquivalenceClasses(A, M)
 
-                if (size > maxx):
-                    maxx = size
-                    np = k
+                # print(temp_eqClasses)
+
+                maxx = 0
+
+                for k in temp_eqClasses.keys():
+                    size = len(temp_eqClasses[k])
+
+                    if (size > maxx):
+                        maxx = size
+                        np = k
+
+                # print('A after:')
+                # print([tuple(i.getMap()) for i in A])
 
     return M
+
+
+# checks if a function satisfies a set of SBCs
+def checkSBCFunction(f, M):
+    for m in f.getDomain():
+        if (not checkSBC(m, f.applyMap(m), M, f)):
+            return False
+
+    return True
+
 
 
 
@@ -762,6 +776,7 @@ def onionDecompose(G):
     K.add_edges_from(G.edges())
 
     is_root = {}
+    marked = {}
     coreness = {}
     onion_layer = {}
     traversal_order = {}
@@ -798,11 +813,16 @@ def onionDecompose(G):
                 core = minn
 
     for v in G:
-        for u in G[v]:
-            if coreness[u] == 1:
-                is_root[v].append(u)
+        marked[v] = False
+
+        if (v in shell_2):
+            for u in G[v]:
+                if coreness[u] == 1:
+                    is_root[v].append(u)
+
                 # print('parent: ', v, 'child: ', u)
 
+    nx.set_node_attributes(G, marked, 'marked')
     nx.set_node_attributes(G, is_root, 'is_root')
     nx.set_node_attributes(G, coreness, 'coreness')
     nx.set_node_attributes(G, onion_layer, 'onion_layer')
@@ -837,6 +857,10 @@ def randomTree(n, seed):
 
 # returns the preorder traversal sequence of a tree. for initial call, parent = root
 def compressTree(T, node, parent, dict = {}):
+
+    if (not nx.is_tree(T)):
+        return False
+
     string = ''
     root = -1
 
