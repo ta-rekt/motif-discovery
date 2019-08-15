@@ -463,8 +463,6 @@ def printSBC(m, n, M, f):
 # G: network to be queried
 def findSubgraphInstances(H, G, withSBC=True):
     # print('##### FIND SUBGRAPH INSTANCES #####')
-    J = nx.Graph()
-    J.add_edges_from(G.edges())
 
     # instances of H found in G
     instances = []
@@ -482,16 +480,15 @@ def findSubgraphInstances(H, G, withSBC=True):
 
         M = symmetryConditions(aut)
         # sort nodes of G by degree
-        sortedDegreeG = sortDegrees(G, G.nodes())
-        mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
-        G = nx.relabel_nodes(G, mapping)
-        J = G
+        # sortedDegreeG = sortDegrees(G, G.nodes())
+        # mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
+        # G = nx.relabel_nodes(G, mapping)
 
     else:
         M = None
 
 
-    for g in sorted(list(J.nodes())):
+    for g in sorted(list(G.nodes())):
         for h in H:
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
@@ -508,6 +505,7 @@ def findSubgraphInstances(H, G, withSBC=True):
         instances = bijectionsOnly(instances)
 
     if(withSBC):
+        # print([tuple(i.getMap()) for i in instances])
         return len(instances)
 
     return instances
