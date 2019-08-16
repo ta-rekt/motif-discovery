@@ -526,18 +526,13 @@ def findSubgraphInstances(H, G, withSBC=True):
                 for h in H:
                     r_h = H.nodes[h]['is_root']
                     if (r_h):
+                        print('h:', h,'g:', g)
 
-                        S = nx.Graph()
-                        for j in r_g:
-                            Sj = subtree(G, j, g)
-                            Sj.add_edge(j, g)
-                            S.add_edges_from(Sj.edges())
-
-                        T = nx.Graph()
-                        for i in r_h:
-                            Ti = subtree(H, i, h)
-                            Ti.add_edge(i, h)
-                            T.add_edges_from(Ti.edges())
+                        S = detachTree(G, g, g)
+                        T = detachTree(H, h, h)
+                        
+                        print(S.nodes(), g)
+                        print(T.nodes(), h)
 
                         treeCount = countRootedSubtrees(T, h, S, g)
                         matchCount[g][h] = treeCount
@@ -561,18 +556,13 @@ def findSubgraphInstances(H, G, withSBC=True):
                         f.setMult(treeCount)
 
                         if (treeCount > 0):
-                            S = nx.Graph()
+                            S = detachTree(G, g, g)
+                            T = detachTree(H, h, h)
+
                             for j in r_g:
-                                Sj = subtree(G, j, g)
-                                Sj.add_edge(j, g)
-                                S.add_edges_from(Sj.edges())
                                 G.nodes[j]['marked'] = True
 
-                            T = nx.Graph()
                             for i in r_h:
-                                Ti = subtree(H, i, h)
-                                Ti.add_edge(i, h)
-                                T.add_edges_from(Ti.edges())
                                 H.nodes[i]['marked'] = True
 
                             f.extend([(val, list(S)[key]) for key, val in enumerate(T)])
@@ -581,11 +571,11 @@ def findSubgraphInstances(H, G, withSBC=True):
 
                             if(type(iso) == type(f)):  # sometimes iso is an empty list
                                 instances.append(iso)
-                                # print(tuple(iso.getMap()))
+                                print(tuple(iso.getMap()))
                             else:
                                 [instances.append(i) for i in iso]   # instances might contain duplicate maps
-                                # print([tuple(i.getMap()) for i in iso])
-                                # print([i.getMult() for i in iso])
+                                print([tuple(i.getMap()) for i in iso])
+                                print([i.getMult() for i in iso])
 
                 G.remove_node(g)
                 # print('g nodes:', G.nodes())
@@ -713,24 +703,19 @@ def isomorphicExtensions(f, H, G, call=0, M=None): # M
                     if (M and r_g and r_h):
                         attributesH = H.nodes[0].keys()
 
-                        S = nx.Graph()
+                        S = detachTree(G, n, n)
+                        T = detachTree(H, m, m)
+
                         for j in r_g:
-                            Sj = subtree(G, j, n)
-                            Sj.add_edge(j, n)
-                            S.add_edges_from(Sj.edges())
                             G.nodes[j]['marked'] = True
 
-                        T = nx.Graph()
                         for i in r_h:
-                            Ti = subtree(H, i, m)
-                            Ti.add_edge(i, m)
-                            T.add_edges_from(Ti.edges())
                             H.nodes[i]['marked'] = True
 
                         matchCount = G.nodes[n]['match_count'][m]
 
                         fp.setMult(fp.getMult() * matchCount)
-                        
+
                         if (matchCount > 0):
                             fp.extend([(val, list(S)[key]) for key, val in enumerate(T)])
 
@@ -892,8 +877,6 @@ def onionDecompose(G):
                 if coreness[u] == 1:
                     is_root[v].append(u)
 
-                # print('parent: ', v, 'child: ', u)
-
     nx.set_node_attributes(G, marked, 'marked')
     nx.set_node_attributes(G, is_root, 'is_root')
     nx.set_node_attributes(G, coreness, 'coreness')
@@ -1005,6 +988,30 @@ def subtree(T, r, p):
                             F.add_edge(i, j)
 
     return F
+
+# returns a 1-shell tree sticking on a graph G rooted at n
+def detachTree(G, root, parent):
+
+    children = set()
+
+    if (root == parent):
+        for i in G[root]:
+            if (G.nodes[i]['coreness'] == 1):
+                children.add(i)
+    else:
+        children = set(G[root]).difference({parent})
+
+    T = nx.Graph()
+
+    if (children):
+        for i in children:
+            Ti = detachTree(G, i, root)
+            Ti.add_edge(i, root)
+            T.add_edges_from(Ti.edges())
+    else:
+        T.add_node(root)
+
+    return T
 
 
 # computes the permanent of a non-square matrix
