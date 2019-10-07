@@ -490,16 +490,14 @@ def findSubgraphInstances(H, G, withSBC=True):
     instances = []
     matchCount = {}
 
-    # relabel input graphs by order of increasing degree
-    # G = relabelByDegree(G)
-    # H = relabelByDegree(H)
-
     # adds onion_layer, coreness, traversal, and is_root attributes, useful for later
     onionDecompose(G)
     onionDecompose(H)
 
-    attributesG = G.nodes[0].keys()
-    attributesH = H.nodes[0].keys()
+    someNode = list(G.nodes())[0]
+
+    attributesG = G.nodes[someNode].keys()
+    attributesH = H.nodes[someNode].keys()
 
     if (len(H) > len(G)):
         return 0
@@ -516,7 +514,7 @@ def findSubgraphInstances(H, G, withSBC=True):
 
         aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
         M = symmetryConditions(aut)
-        print(M)
+        # print(M)
 
         for g in G:
             r_g = G.nodes[g]['is_root']
@@ -526,16 +524,12 @@ def findSubgraphInstances(H, G, withSBC=True):
                 for h in H:
                     r_h = H.nodes[h]['is_root']
                     if (r_h):
-                        print('h:', h,'g:', g)
+                        # print('h:', h,'g:', g)
 
                         S = detachTree(G, g, g)
                         T = detachTree(H, h, h)
-                        
-                        print(S.nodes(), g)
-                        print(T.nodes(), h)
 
-                        treeCount = countRootedSubtrees(T, h, S, g)
-                        matchCount[g][h] = treeCount
+                        countSubtreeMatchings(T, h, h, S, g, matchCount[g])
 
 
         print(matchCount)
@@ -546,12 +540,10 @@ def findSubgraphInstances(H, G, withSBC=True):
 
             if (r_g):
                 for h in H:
-                    r_h = H.nodes[h]['is_root']
-
-                    if (r_h and canSupport(h, g, H, G)):
+                    if ((H.nodes[h]['coreness']==1 or H.nodes[h]['is_root']) and canSupport(h, g, H, G)):
                         # print('h:', h, list(H[h]),'g:', g, list(G[g]))
 
-                        f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
+                        f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list of tuples
                         treeCount = G.nodes[g]['match_count'][h]
                         f.setMult(treeCount)
 
@@ -562,27 +554,23 @@ def findSubgraphInstances(H, G, withSBC=True):
                             for j in r_g:
                                 G.nodes[j]['marked'] = True
 
-                            for i in r_h:
-                                H.nodes[i]['marked'] = True
-
                             f.extend([(val, list(S)[key]) for key, val in enumerate(T)])
 
                             iso = isomorphicExtensions(f, H, G, 0, M)  # M
 
                             if(type(iso) == type(f)):  # sometimes iso is an empty list
                                 instances.append(iso)
-                                print(tuple(iso.getMap()))
+                                # print(tuple(iso.getMap()))
                             else:
                                 [instances.append(i) for i in iso]   # instances might contain duplicate maps
-                                print([tuple(i.getMap()) for i in iso])
-                                print([i.getMult() for i in iso])
+                                # print([tuple(i.getMap()) for i in iso])
+                                # print([i.getMult() for i in iso])
 
                 G.remove_node(g)
                 # print('g nodes:', G.nodes())
 
     else:
         M = None
-
 
 
     # traverse G in order of degree, or label (same)
@@ -667,8 +655,6 @@ def isomorphicExtensions(f, H, G, call=0, M=None): # M
     # print('neighbors of partial domain: ',end='')
     # print(neighborsD)
 
-
-
     # check for induced isomorphism.
     for n in neighborsR:
         if (not G.nodes[n]['marked']):
@@ -700,24 +686,21 @@ def isomorphicExtensions(f, H, G, call=0, M=None): # M
                     call2 = call + 1
 
                     # if we hit two trees, count them and continue extending f elsewhere
-                    if (M and r_g and r_h):
-                        attributesH = H.nodes[0].keys()
-
-                        S = detachTree(G, n, n)
-                        T = detachTree(H, m, m)
-
-                        for j in r_g:
-                            G.nodes[j]['marked'] = True
-
-                        for i in r_h:
-                            H.nodes[i]['marked'] = True
-
-                        matchCount = G.nodes[n]['match_count'][m]
-
-                        fp.setMult(fp.getMult() * matchCount)
-
-                        if (matchCount > 0):
-                            fp.extend([(val, list(S)[key]) for key, val in enumerate(T)])
+                    # if (M and r_g and r_h):
+                    #     attributesH = H.nodes[0].keys()
+                    #
+                    #     S = detachTree(G, n, n)
+                    #     T = detachTree(H, m, m)
+                    #
+                    #     for j in r_g:
+                    #         G.nodes[j]['marked'] = True
+                    #
+                    #     matchCount = G.nodes[n]['match_count'][m]
+                    #
+                    #     fp.setMult(fp.getMult() * matchCount)
+                    #
+                    #     if (matchCount > 0):
+                    #         fp.extend([(val, list(S)[key]) for key, val in enumerate(T)])
 
 
                     iso = isomorphicExtensions(fp, H, G, call2, M)
@@ -817,8 +800,6 @@ def checkSBCFunction(f, M):
             return False
 
     return True
-
-
 
 
 
@@ -981,6 +962,7 @@ def subtree(T, r, p):
 
             if (len(k) == 1):
                 F.add_node(r)
+
             else:
                 for i in k:
                     for j in k:
@@ -989,29 +971,60 @@ def subtree(T, r, p):
 
     return F
 
-# returns a 1-shell tree sticking on a graph G rooted at n
-def detachTree(G, root, parent):
+
+# counts the matchings between every subtree of T with S and stores
+# them in the dictionary
+def countSubtreeMatchings(T, rootT, parentT, S, rootS, dic):
+    dic[rootT] = countRootedSubtrees(T, rootT, S, rootS)
+
+    if (rootT == parentT):
+        children = set(T[rootT])
+    else:
+        children = set(T[rootT]).difference({parentT})
+
+    if (children):
+        for i in children:
+            Ti = detachTree(T, i, rootT)
+            countSubtreeMatchings(Ti, i, rootT, S, rootS, dic)
+    return
+
+
+# returns a tree in the 1-shell rooted at root.
+# can select which children to include using select.
+def detachTree(G, root, parent, select=None):
+    K = nx.Graph()
+    K.add_edges_from(G.edges())
 
     children = set()
 
     if (root == parent):
         for i in G[root]:
-            if (G.nodes[i]['coreness'] == 1):
-                children.add(i)
+            if (G.nodes[i]['onion_layer'] < G.nodes[root]['onion_layer']):
+                if (G.nodes[i]['coreness'] == 1):
+                    children.add(i)
     else:
         children = set(G[root]).difference({parent})
 
     T = nx.Graph()
 
+    if (select):
+        for c in list(children):
+            if (c not in select):
+                children.remove(c)
+
     if (children):
         for i in children:
             Ti = detachTree(G, i, root)
-            Ti.add_edge(i, root)
-            T.add_edges_from(Ti.edges())
+            Ti[0].add_edge(i, root)
+            T.add_edges_from(Ti[0].edges())
     else:
         T.add_node(root)
 
-    return T
+    for t in T:
+        if (t != root):
+            K.remove_node(t)
+
+    return [T, K]
 
 
 # computes the permanent of a non-square matrix

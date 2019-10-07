@@ -25,9 +25,10 @@ count = 0
 # node is the same as some existing node, the function replaces the old node with the new node.
 class Map():
 
-    def __init__(self, init):   # init is a list containing the initial nodes of the partial map
+    def __init__(self, init, multiplier=1, frozen=None):   # init is a list containing the initial nodes of the partial map
         self.map = np.array(init, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
-
+        self.multiplier = multiplier
+        self.frozen = frozen
 
     def extend(self, extension):   # extends the partial map by a list of tuples called extension
         # print('##### EXTENDING PARTIAL MAP #####')
@@ -140,6 +141,14 @@ class Map():
             if (self.map['domainNode'][i] == node):
                 return self.map['rangeNode'][i]
         return -1
+
+    # sets the multiplier
+    def setMult(self, mult):
+        self.multiplier = mult
+
+    # gets the multiplier
+    def getMult(self):
+        return self.multiplier
 
 
 # returns true if g can support h (according to node degree and neighbor degree sequence)
@@ -467,22 +476,26 @@ def findSubgraphInstances(H, G, withSBC=True):
     # instances of H found in G
     instances = []
 
+    onionDecompose(G)
+    onionDecompose(H)
+
     if (len(H) > len(G)):
         return 0
 
     if(withSBC):
 
         K = nx.Graph()
-        K.add_nodes_from(H.nodes())
         K.add_edges_from(H.edges())
+        attributesH = H.nodes[0].keys()
+
+        for name in attributesH:
+            attr = nx.get_node_attributes(H, name)
+            nx.set_node_attributes(K, attr, name)
 
         aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
 
         M = symmetryConditions(aut)
-        # sort nodes of G by degree
-        # sortedDegreeG = sortDegrees(G, G.nodes())
-        # mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
-        # G = nx.relabel_nodes(G, mapping)
+        print(M)
 
     else:
         M = None
@@ -518,7 +531,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     # for c in range(call):
     #     print('   ',end='')
-    #
+
     # print('ISOMORPHIC EXTENSIONS CALL #',end='')
     # print(call)
 
@@ -527,6 +540,8 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
     neighborsD = {None}
     D = f.getDomain()
     R = f.getRange()
+
+    # print('frozen in iso:', frozen)
 
     if(set(D) == set(H.nodes())):
 
@@ -569,54 +584,55 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     # check for induced isomorphism.
     for n in neighborsR:
+        if (not M and not G.nodes[n]['marked']):
+            # print('partial map: ')
+            # print(np.vstack(f.getMap()))
+            #
+            # print('try range extension (n): ',end='')
+            # print(n)
 
-        # print('partial map: ')
-        # print(np.vstack(f.getMap()))
-        #
-        # print('try range extension (n): ',end='')
-        # print(n)
+            out = findCandidates(m, n, H, G, f)
 
-        out = findCandidates(m, n, H, G, f)
+            neighbMinD = out[0]
+            f_neighbMinD = out[1]
+            neighbNinR = out[2]
 
-        neighbMinD = out[0]
-        f_neighbMinD = out[1]
-        neighbNinR = out[2]
+            # print('neighbors of m in D: ', end='')
+            # print(neighbMinD)
+            # print('neighbors of n in R: ', end='')
+            # print(neighbNinR)
+            # print('f(neighbors of m in D): ', end='')
+            # print(f_neighbMinD)
 
-        # print('neighbors of m in D: ', end='')
-        # print(neighbMinD)
-        # print('neighbors of n in R: ', end='')
-        # print(neighbNinR)
-        # print('f(neighbors of m in D): ', end='')
-        # print(f_neighbMinD)
+            if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
 
-        if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
+                if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
 
-            if(checkSBC(m, n, M, f) or (M == None)):  # n conforms to symmetry-breaking conditions
+                    # print('range extension valid')
 
-                # print('range extension valid')
+                    fp = Map(list(f.getMap()))
+                    newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
 
-                fp = Map(list(f.getMap()))
-                newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
+                    fp.extend([newNode])
+                    fp.setMult(f.getMult())
 
-                fp.extend([newNode])
+                    # print('called')
+                    call2 = call + 1
+                    iso = isomorphicExtensions(fp, H, G, call2, M)
+                    # print('returned')
 
-                # print('called')
-                call2 = call + 1
-                iso = isomorphicExtensions(fp, H, G, call2, M)
-                # print('returned')
+                    if(type(iso) == type(fp)):
+                        isomorphisms.append(iso)
+                    else:
+                        [isomorphisms.append(i) for i in iso]
 
-                if(type(iso) == type(fp)):
-                    isomorphisms.append(iso)
                 else:
-                    [isomorphisms.append(i) for i in iso]
+                    # print('failed SBC')
+                    pass
 
             else:
-                # print('failed SBC')
+                # print('failed isomorphism test')
                 pass
-
-        else:
-            # print('failed isomorphism test')
-            pass
 
     # for c in range(call):
     #     print('   ',end='')
@@ -700,3 +716,60 @@ def checkSBCFunction(f, M):
             return False
 
     return True
+
+def onionDecompose(G):
+    K = nx.Graph()
+    K.add_edges_from(G.edges())
+
+    is_root = {}
+    marked = {}
+    coreness = {}
+    onion_layer = {}
+    traversal_order = {}
+
+    core = 1
+    layer = 1
+    count = 0
+
+    shell_2 = set()
+
+    while (len(K.nodes()) > 0):
+        thisLayer = [v for v in K.nodes() if len(K[v]) <= core]
+
+        for v in thisLayer:
+            coreness[v] = core
+            onion_layer[v] = layer
+            traversal_order[count] = v
+            is_root[v] = []
+
+            if (core >= 2):
+                shell_2.add(v)
+
+            K.remove_node(v)  # delete from D
+            count = count + 1
+
+        layer = layer + 1
+
+        D = [len(K[k]) for k in K.nodes()]
+
+        if(D):
+            minn = min(D)
+
+            if (minn > core):
+                core = minn
+
+    for v in G:
+        marked[v] = False
+
+        if (v in shell_2):
+            for u in G[v]:
+                if coreness[u] == 1:
+                    is_root[v].append(u)
+
+    nx.set_node_attributes(G, marked, 'marked')
+    nx.set_node_attributes(G, is_root, 'is_root')
+    nx.set_node_attributes(G, coreness, 'coreness')
+    nx.set_node_attributes(G, onion_layer, 'onion_layer')
+    nx.set_node_attributes(G, traversal_order, 'traversal')
+
+    return traversal_order
