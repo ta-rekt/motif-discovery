@@ -25,10 +25,9 @@ count = 0
 # node is the same as some existing node, the function replaces the old node with the new node.
 class Map():
 
-    def __init__(self, init, multiplier=1, frozen=None):   # init is a list containing the initial nodes of the partial map
+    def __init__(self, init, multiplier=1):   # init is a list containing the initial nodes of the partial map
         self.map = np.array(init, dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
         self.multiplier = multiplier
-        self.frozen = frozen
 
     def extend(self, extension):   # extends the partial map by a list of tuples called extension
         # print('##### EXTENDING PARTIAL MAP #####')
@@ -462,6 +461,16 @@ def printSBC(m, n, M, f):
     print('f: ',end='')
     print(tuple(f.getMap()))
 
+# relabels a graph's edges in increasing degree order
+# H: a networkx graph
+def relabelByDegree(H):
+    sortedDegreeH = sortDegrees(H, H.nodes())
+    mappingH = dict(zip(sortedDegreeH['node'], range(len(H))))
+    H = nx.relabel_nodes(H, mappingH)
+
+    return H
+
+
 
 ###################################################################################
 ###################### grochow-kellis motif search algorithm ######################
@@ -475,9 +484,8 @@ def findSubgraphInstances(H, G, withSBC=True):
 
     # instances of H found in G
     instances = []
-
-    onionDecompose(G)
     onionDecompose(H)
+    onionDecompose(G)
 
     if (len(H) > len(G)):
         return 0
@@ -485,17 +493,17 @@ def findSubgraphInstances(H, G, withSBC=True):
     if(withSBC):
 
         K = nx.Graph()
+        K.add_nodes_from(H.nodes())
         K.add_edges_from(H.edges())
-        attributesH = H.nodes[0].keys()
-
-        for name in attributesH:
-            attr = nx.get_node_attributes(H, name)
-            nx.set_node_attributes(K, attr, name)
 
         aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
-
+        # print([i.getMap() for i in aut])
         M = symmetryConditions(aut)
-        print(M)
+        # print(M)
+        # sort nodes of G by degree
+        # sortedDegreeG = sortDegrees(G, G.nodes())
+        # mapping = dict(zip(sortedDegreeG['node'], range(len(G))))
+        # G = nx.relabel_nodes(G, mapping)
 
     else:
         M = None
@@ -531,7 +539,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     # for c in range(call):
     #     print('   ',end='')
-
+    #
     # print('ISOMORPHIC EXTENSIONS CALL #',end='')
     # print(call)
 
@@ -540,8 +548,6 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
     neighborsD = {None}
     D = f.getDomain()
     R = f.getRange()
-
-    # print('frozen in iso:', frozen)
 
     if(set(D) == set(H.nodes())):
 
@@ -584,7 +590,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     # check for induced isomorphism.
     for n in neighborsR:
-        if (not M and not G.nodes[n]['marked']):
+        if (not G.nodes[n]['marked']):
             # print('partial map: ')
             # print(np.vstack(f.getMap()))
             #
@@ -627,7 +633,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
                         [isomorphisms.append(i) for i in iso]
 
                 else:
-                    # print('failed SBC')
+                    print('failed SBC')
                     pass
 
             else:
@@ -703,9 +709,6 @@ def symmetryConditions(aut):
                         maxx = size
                         np = k
 
-                # print('A after:')
-                # print([tuple(i.getMap()) for i in A])
-
     return M
 
 
@@ -717,6 +720,8 @@ def checkSBCFunction(f, M):
 
     return True
 
+# labels each node with its onion layer and coreness, adds them as attributes to G
+# G: network to be decomposed
 def onionDecompose(G):
     K = nx.Graph()
     K.add_edges_from(G.edges())
