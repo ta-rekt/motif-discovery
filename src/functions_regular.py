@@ -633,7 +633,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
                         [isomorphisms.append(i) for i in iso]
 
                 else:
-                    print('failed SBC')
+                    # print('failed SBC')
                     pass
 
             else:
