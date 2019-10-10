@@ -536,7 +536,6 @@ def findSubgraphInstances(H, G, withSBC=True):
 # condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
 # f: partial map to be extended
 def isomorphicExtensions(f, H, G, call, M = None): # M
-
     # for c in range(call):
     #     print('   ',end='')
     #
