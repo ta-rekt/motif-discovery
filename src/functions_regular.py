@@ -590,7 +590,9 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     # check for induced isomorphism.
     for n in neighborsR:
-        if (not G.nodes[n]['marked']):
+        # print('n:', n, 'marked:', G.nodes[n]['marked'])
+        if (G.nodes[n]['marked'] == False):
+
             # print('partial map: ')
             # print(np.vstack(f.getMap()))
             #
