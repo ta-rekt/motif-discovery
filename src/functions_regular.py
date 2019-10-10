@@ -170,12 +170,12 @@ def canSupport(h, g, H, G):
 
         minn = min(len(neighborsH), len(neighborsG))
 
-        for i in range(minn):
-            if(neighborsG['degree'][i] < neighborsH['degree'][i]):
-
-                # print("rejected because of sequence")
-
-                return False
+        # for i in range(minn):
+        #     if(neighborsG['degree'][i] < neighborsH['degree'][i]):
+        #
+        #         print("rejected because of sequence")
+        #
+        #         return False
 
         # print("can support")
 
@@ -510,7 +510,10 @@ def findSubgraphInstances(H, G, withSBC=True):
 
 
     for g in sorted(list(G.nodes())):
+        # print('g:', g)
         for h in H:
+            # print('h:', h)
+            # print('cansupport', g, ' ', h, canSupport(h, g, H, G))
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
                 iso = isomorphicExtensions(f, H, G, 1, M)  # M
@@ -526,7 +529,7 @@ def findSubgraphInstances(H, G, withSBC=True):
         instances = bijectionsOnly(instances)
 
     if(withSBC):
-        # print([tuple(i.getMap()) for i in instances])
+        print([tuple(i.getMap()) for i in instances])
         return len(instances)
 
     return instances
@@ -559,7 +562,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
         # for c in range(call):
         #     print('   ',end='')
-        # print(list(f.getMap()))
+        # print('instance found:', list(f.getMap()))
         # print('nodes of G: ',end='')
         # print(G.nodes())
 
@@ -567,8 +570,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     m = mostConstrainedNode(D, H)
 
-    # print('domain extension (m): ', end='')
-    # print(m)
+    # print('domain extension (m): ', m)
 
     # list of neighbors of f(D)
     for r in R:
@@ -594,9 +596,8 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
             # print('partial map: ')
             # print(np.vstack(f.getMap()))
-            #
-            # print('try range extension (n): ',end='')
-            # print(n)
+
+            # print('try range extension (n): ', n)
 
             out = findCandidates(m, n, H, G, f)
 
