@@ -15,6 +15,7 @@ import operator
 from operator import mul
 import itertools as it
 from itertools import groupby
+import functions_regular as fnr
 import math
 
 count = 0
@@ -480,256 +481,124 @@ def relabelByDegree(H):
 ###################### grochow-kellis motif search algorithm ######################
 ###################################################################################
 
-# finds all instances of query graph H in network G
-# H: query graph
-# G: network to be queried
-def findSubgraphInstances(H, G, withSBC=True):
-    # print('##### FIND SUBGRAPH INSTANCES #####')
-    # print(withSBC)
-
+def findSubgraphInstances(strH, strG):
     instances = []
-    matchCount = {}
 
-    # adds onion_layer, coreness, traversal, and is_root attributes, useful for later
+    H = nx.Graph()
+    G = nx.Graph()
+    H = parseStringToGraph(strH)
+    G = parseStringToGraph(strG)
+
+    H.remove_edges_from(H.selfloop_edges())
+    G.remove_edges_from(G.selfloop_edges())
+
     onionDecompose(G)
     onionDecompose(H)
 
-    someNode = list(G.nodes())[0]
+    marks_G = {}
+    marks_H = {}
 
-    attributesG = G.nodes[someNode].keys()
-    attributesH = H.nodes[someNode].keys()
+    K = nx.Graph()
+    K.add_edges_from(H.edges())
 
-    if (len(H) > len(G)):
-        return 0
+    attributesH = H.nodes[0].keys()
+    for name in attributesH:
+        attr = nx.get_node_attributes(H, name)
+        nx.set_node_attributes(K, attr, name)
 
-    if(withSBC):
+    aut = fnr.findSubgraphInstances(H, K, False)
+    M = fnr.symmetryConditions(aut)
+#     print('M', M)
 
-        # could be cleaned up
-        K = nx.Graph()
-        K.add_edges_from(H.edges())
+    combos = {}
 
-        for name in attributesH:
-            attr = nx.get_node_attributes(H, name)
-            nx.set_node_attributes(K, attr, name)
+    for h in H:
+        if (H.nodes[h]['coreness'] == 1 or H.nodes[h]['is_root']):
+            combos[h] = enumSubtrees(H, h, True)
 
-        aut = findSubgraphInstances(H, K, False)  # returns list of automorphisms of H
-        M = symmetryConditions(aut)
-        # print(M)
 
-        for g in G:
-            r_g = G.nodes[g]['is_root']
-            matchCount[g] = {}
+    for g in list(G.nodes()):
+        if (g in G):
+            if (G.nodes[g]['is_root']):
+#                 print('g:', g)
 
-            if (r_g):
+                S = detachTree(G, g, g)
+                S = S[0]
+#                 print('S:', S.nodes())
+
                 for h in H:
-                    r_h = H.nodes[h]['is_root']
-                    if (r_h):
-                        # print('h:', h,'g:', g)
+                    if (H.nodes[h]['coreness'] == 1 or H.nodes[h]['is_root']):
+#                         print('h:', h)
+                        combo = combos[h]
+#                         print('combo:', combo)
 
-                        S = detachTree(G, g, g)
-                        T = detachTree(H, h, h)
+                        for i in combo.values():
+                            for select in i:
+#                                 print('select:', select)
 
-                        countSubtreeMatchings(T, h, h, S, g, matchCount[g])
+                                T = detachTree(H, h, h, select)
+                                A = T[0]
+                                B = T[1]
+#                                 print('A:', A.nodes())
 
+                                f = fnr.Map([(h, g)])
 
-        print(matchCount)
-        nx.set_node_attributes(G, matchCount, 'match_count')
+                                if (len(S) >= len(A)):
 
-        for g in list(G):
-            r_g = G.nodes[g]['is_root']
+                                    count = countRootedSubtrees(A, h, S, g)
+#                                     print('count:', count)
+                                    f.setMult(count)
 
-            if (r_g):
-                for h in H:
-                    if ((H.nodes[h]['coreness']==1 or H.nodes[h]['is_root']) and canSupport(h, g, H, G)):
-                        # print('h:', h, list(H[h]),'g:', g, list(G[g]))
+                                    if (count > 0):
 
-                        f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list of tuples
-                        treeCount = G.nodes[g]['match_count'][h]
-                        f.setMult(treeCount)
+                                        for s in S:
+                                            if (s != g):
+                                                marks_G[s] = True
+#                                                 print(s, 'marked')
 
-                        if (treeCount > 0):
-                            S = detachTree(G, g, g)
-                            T = detachTree(H, h, h)
+                                        nx.set_node_attributes(G, marks_G, 'marked')
 
-                            for j in r_g:
-                                G.nodes[j]['marked'] = True
+#                                         print('f before isoext:', f.getMap())
+                                        iso = fnr.isomorphicExtensions(f, B, G, 0, M)
 
-                            f.extend([(val, list(S)[key]) for key, val in enumerate(T)])
+                                        for s in S:
+                                            if (s != g):
+                                                marks_G[s] = False
+#                                                 print(s, 'unmarked')
 
-                            iso = isomorphicExtensions(f, H, G, 0, M)  # M
+                                        nx.set_node_attributes(G, marks_G, 'marked')
 
-                            if(type(iso) == type(f)):  # sometimes iso is an empty list
-                                instances.append(iso)
-                                # print(tuple(iso.getMap()))
-                            else:
-                                [instances.append(i) for i in iso]   # instances might contain duplicate maps
-                                # print([tuple(i.getMap()) for i in iso])
-                                # print([i.getMult() for i in iso])
+                                        if(type(iso) == type(f)):
+                                            instances.append(iso)
 
-                G.remove_node(g)
-                # print('g nodes:', G.nodes())
+                                        else:
+                                            for i in iso:
+                                                instances.append(i)
 
-    else:
-        M = None
+#                                         print('instances:', [[tuple(x.getMap()), x.getMult()] for x in iso])
 
+                P = list(S.nodes())
+                P.remove(g)
 
-    # traverse G in order of degree, or label (same)
-    for g in sorted(list(G.nodes())):
-        r_g = G.nodes[g]['is_root']
+                for s in P:
+                    G.remove_node(s)
 
-        if (M and not (G.nodes[g]['coreness'] == 1 or r_g)) or not M:
-            for h in H:
-                if (canSupport(h, g, H, G)):
-
-                    f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
-                    iso = isomorphicExtensions(f, H, G, 0, M)  # M
-
-                    if(type(iso) == type(f)):  # sometimes iso is an empty list
-                        instances.append(iso)
-                    else:
-                        [instances.append(i) for i in iso]   # instances might contain duplicate maps
-
+    for g in list(G.nodes()):
+        if (G.nodes[g]['coreness'] == 1):
             G.remove_node(g)
 
-    if(H.edges() == G.edges()):
-        instances = bijectionsOnly(instances)
+#     print('1-shell:', [[tuple(f.getMap()), f.getMult()] for f in instances])
 
-    if (withSBC):
-        count = sum([i.getMult() for i in instances])
-        # print([(tuple(i.getMap()), i.getMult()) for i in instances])
+    total = 0
+    for f in instances:
+        total = total + f.getMult()
 
-        return count
+    two_core = fnr.findSubgraphInstances(H, G, True)
 
-    return instances
+    print('1-shell:', total)
+    print('2-core:', two_core)
 
-
-# finds all isomorphic extensions of a partial map [satisfying the symmetry-breaking
-# condition C at h]. returns them in a list of tuples [(a1, b1), ... ,(ak, bk)]
-# f: partial map to be extended
-def isomorphicExtensions(f, H, G, call=0, M=None): # M
-
-    # for c in range(call):
-    #     print('   ',end='')
-    #
-    # print('ISOMORPHIC EXTENSIONS CALL #',end='')
-    # print(call)
-
-    isomorphisms = []
-
-    neighborsR = set()
-    neighborsD = set()
-
-    D = f.getDomain()
-    R = f.getRange()
-
-
-    # if(M and (set(D) == set([i for i in H.nodes() if H.nodes[i]['coreness'] > 1])) or not M and (set(D) == set(H.nodes()))):
-    if (set(D) == set(H.nodes())):
-        f.extend(list(np.sort(f.getMap(), order='domainNode')))
-
-        return f
-
-    # print('H: ', H.nodes())
-    # print('D: ', D)
-    m = mostConstrainedNode(D, H)
-
-    # print('partial map:', tuple(f.getMap()))
-    #
-    # print('domain extension (m): ', end='')
-    # print(m)
-
-    # list of neighbors of f(D)
-    for r in R:
-        neighborsR = neighborsR.union(set(G[r]))
-
-    # list of neighbors of D
-    for d in D:
-        neighborsD = neighborsD.union(set(H[d]))
-
-    # exclusive neighborhood
-    neighborsR = neighborsR.difference(set(R))
-    neighborsD = neighborsD.difference(set(D))
-
-    # print('neighbors of partial range: ',end='')
-    # print(neighborsR)
-    # print('neighbors of partial domain: ',end='')
-    # print(neighborsD)
-
-    # check for induced isomorphism.
-    for n in neighborsR:
-        if (not G.nodes[n]['marked']):
-
-            # print('try range extension: ', n)
-
-            out = findCandidates(m, n, H, G, f)
-
-            neighbMinD = out[0]
-            f_neighbMinD = out[1]
-            neighbNinR = out[2]
-
-            # print('fnmd',f_neighbMinD)
-            # print('nnr',neighbNinR)
-
-            r_g = G.nodes[n]['is_root']
-            r_h = H.nodes[m]['is_root']
-
-            if(set(f_neighbMinD) == set(neighbNinR)): # add condition for tree string matching later
-
-                if(checkSBC(m, n, M, f)):  # n conforms to symmetry-breaking conditions
-
-                    fp = Map(list(f.getMap()))
-                    fp.setMult(f.getMult())
-
-                    newNode = np.array((m, n), dtype=[('domainNode', 'i4'), ('rangeNode', 'i4')])
-                    fp.extend([newNode])
-
-                    call2 = call + 1
-
-                    # if we hit two trees, count them and continue extending f elsewhere
-                    # if (M and r_g and r_h):
-                    #     attributesH = H.nodes[0].keys()
-                    #
-                    #     S = detachTree(G, n, n)
-                    #     T = detachTree(H, m, m)
-                    #
-                    #     for j in r_g:
-                    #         G.nodes[j]['marked'] = True
-                    #
-                    #     matchCount = G.nodes[n]['match_count'][m]
-                    #
-                    #     fp.setMult(fp.getMult() * matchCount)
-                    #
-                    #     if (matchCount > 0):
-                    #         fp.extend([(val, list(S)[key]) for key, val in enumerate(T)])
-
-
-                    iso = isomorphicExtensions(fp, H, G, call2, M)
-
-                    if(type(iso) == type(fp)):
-                        isomorphisms.append(iso)
-                    else:
-                        [isomorphisms.append(i) for i in iso]
-
-                else:
-                    # print('failed SBC')
-                    pass
-
-            else:
-                # print('failed isomorphism test')
-                pass
-
-    # for c in range(call):
-    #     print('   ',end='')
-    #
-    # print('EXIT ISOMORPHIC EXTENSIONS CALL #', end='')
-    # print(call)
-    # for c in range(call):
-    #     print('   ',end='')
-    # print('output: ',end='')
-
-    # print([tuple(k.getMap()) for k in isomorphisms])
-
-    return isomorphisms
+    return total + two_core
 
 
 # finds symmetry-breaking conditions for H given HE and Aut(H). don't need a labeling function on G
@@ -1178,3 +1047,114 @@ def countRootedSubtrees(T, rootT, S, rootS):
     count = countMatchings(T, rootT, S, rootS, preorder)
 
     return count
+
+
+# enumerates all subtrees of a tree in H rooted at h
+def enumSubtrees(H, h, sb=False):
+    combos = {}
+
+    if (H.node[h]['coreness'] > 1 and not H.node[h]['is_root']):
+        print('h is not in 1-shell and is not a root')
+
+        return
+
+    T = detachTree(H, h, h)
+
+    children = list(T[0][h])
+
+#     print('T', T[0].nodes())
+#     print('children', children)
+
+    if (len(T[0].nodes()) == 1):
+        combos[0] = {}
+
+        return combos
+
+    elif (sb):
+        newNode = np.max(T[0].nodes()) + 1
+        R = nx.Graph()
+        R.add_edges_from(T[0].edges())
+        R.add_edges_from([(newNode,h), (newNode,newNode+1), (newNode+1,h)])
+
+        P = nx.Graph()
+        P.add_edges_from(R.edges())
+
+        aut = fnr.findSubgraphInstances(R, P, False)
+        tClasses = fnr.findEquivalenceClasses(aut)
+
+        reps = list(tClasses.keys())
+
+#         print('reps:', reps)
+#         print('neighbors of h', list(T[0][h]))
+
+        children = []
+
+        for node in reps:
+            if (node in T[0][h]):
+                children = children + [node] * len(tClasses[node])
+
+#         print('children:', children)
+
+        for i in range(len(children)):
+            c = co.Counter()
+            c.update(map(tuple, map(sorted, it.combinations(children, i+1))))
+
+            l = list(c.keys())
+            combo = []
+
+            for x in l:
+                x = np.array(x)
+                y = np.array(x)
+
+                for key in tClasses.keys():
+                    if (key in T[0][h]):
+                        eqList = list(tClasses[key])
+
+                        indices = np.where(x==key)
+#                         print('indices:', indices)
+
+                        if (len(indices[0]) > 1):
+                            replace = eqList[:len(indices[0])]
+#                             print('replace:', replace)
+
+                            for (ind, rep) in zip(indices[0], replace):
+                                y[ind] = rep
+
+                combo.append(tuple(y))
+
+            combos[i+1] = combo
+
+    else:
+        for i in range(len(children)):
+            combos[i+1] = list(it.combinations(children, i+1))
+
+#     print('combos', h, ':', combos)
+    return combos
+
+
+# input: edges of a graph written in bracketed pairs
+# output: graph with corresponding edges
+def parseStringToGraph(s):
+    l = []
+
+    if(s[len(s)-1] == ' '):
+        s = s[:-1]
+
+    if(s[0] == '[' and s[len(s)-1] == ']'):
+        s = s[-(len(s)-1):-1]
+        start = [key for key, val in enumerate(s) if val == '[']
+        end = [key for key, val in enumerate(s) if val == ']']
+        comma = [key for key, val in enumerate(s) if (val == ',' and not s[key-1] == ']')]
+
+        for i in range(len(start)):
+            left = [v for k, v in enumerate(s) if k in range(start[i]+1, comma[i])]
+            right = [v for k, v in enumerate(s) if k in range(comma[i]+1, end[i])]
+
+            left = int(''.join(left))
+            right = int(''.join(right))
+            l.append((left, right))
+
+    H = nx.Graph()
+    H.add_edges_from(l)
+
+    return H
