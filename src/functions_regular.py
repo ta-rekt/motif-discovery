@@ -529,7 +529,7 @@ def findSubgraphInstances(H, G, withSBC=True):
         instances = bijectionsOnly(instances)
 
     if(withSBC):
-        print([tuple(i.getMap()) for i in instances])
+        # print([tuple(i.getMap()) for i in instances])
         return len(instances)
 
     return instances
