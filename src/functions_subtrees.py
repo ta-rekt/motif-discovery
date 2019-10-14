@@ -595,8 +595,8 @@ def findSubgraphInstances(strH, strG):
 
     two_core = fnr.findSubgraphInstances(H, G, True)
 
-    print('1-shell:', total)
-    print('2-core:', two_core)
+    # print('1-shell:', total)
+    # print('2-core:', two_core)
 
     return total + two_core
 
