@@ -483,6 +483,7 @@ def relabelByDegree(H):
 
 def findSubgraphInstances(strH, strG):
     instances = []
+    shell_1_counts = 0
 
     H = nx.Graph()
     G = nx.Graph()
@@ -492,7 +493,7 @@ def findSubgraphInstances(strH, strG):
     H.remove_edges_from(H.selfloop_edges())
     G.remove_edges_from(G.selfloop_edges())
 
-    onionDecompose(G)
+    G_order = onionDecompose(G)
     onionDecompose(H)
 
     marks_G = {}
@@ -507,98 +508,142 @@ def findSubgraphInstances(strH, strG):
         nx.set_node_attributes(K, attr, name)
 
     aut = fnr.findSubgraphInstances(H, K, False)
+    eqClasses = fnr.findEquivalenceClasses(aut)
+    HE = list(eqClasses.keys())
     M = fnr.symmetryConditions(aut)
 #     print('M', M)
 
+    is_tree = nx.is_tree(H)
+
     combos = {}
 
-    for h in H:
-        if (H.nodes[h]['coreness'] == 1 or H.nodes[h]['is_root']):
+    for h in HE:
+        if (is_tree):
             combos[h] = enumSubtrees(H, h, True)
 
+        elif (H.nodes[h]['coreness'] == 1):
+            p = -1
 
-    for g in list(G.nodes()):
+            for i in H[h]:
+                if (H.nodes[i]['onion_layer'] > H.nodes[h]['onion_layer']):
+                    p = i
+
+            T = subtree(H, h, p)
+            combos[h] = enumSubtrees(T, h, True)
+
+        elif (H.nodes[h]['is_root']):
+            T = detachTree(H, h)
+            T = T[0]
+            combos[h] = enumSubtrees(T, h, True)
+
+
+    for c in range(len(G)):
+        g = G_order[c]
+
         if (g in G):
-            if (G.nodes[g]['is_root']):
-#                 print('g:', g)
+            # print('g:', g, 'coreness:', G.nodes[g]['coreness'])
 
-                S = detachTree(G, g, g)
+            if (G.nodes[g]['coreness'] == 1):
+                # print('1-SHELL')
+
+                if (is_tree):
+                    p = -1
+
+                    for i in G[g]:
+                        if (G.nodes[i]['onion_layer'] > G.nodes[g]['onion_layer']):
+                            p = i
+
+                    S = subtree(G, g, p)
+
+                    for h in HE:
+                        count = countRootedSubtrees(H, h, S, g)
+
+                        if (count > 0):
+                            shell_1_counts += count
+                            # print('root:', g, 'count:', shell_1_counts)
+
+
+            elif (G.nodes[g]['is_root']):
+                # print('IN-BETWEEN')
+
+                S = detachTree(G, g)
                 S = S[0]
-#                 print('S:', S.nodes())
+                # print('S:', S.nodes())
 
-                for h in H:
-                    if (H.nodes[h]['coreness'] == 1 or H.nodes[h]['is_root']):
-#                         print('h:', h)
+                for h in HE:
+                    if (H.nodes[h]['coreness'] == 1 or H.nodes[h]['is_root'] or is_tree):
+                        # print('h:', h)
                         combo = combos[h]
-#                         print('combo:', combo)
+                        # print('combo:', combo)
 
                         for i in combo.values():
                             for select in i:
-#                                 print('select:', select)
+                                # print('select:', select)
 
-                                T = detachTree(H, h, h, select)
-                                A = T[0]
-                                B = T[1]
-#                                 print('A:', A.nodes())
+                                if (select):
+                                    T = detachTree(H, h, select)
+                                    A = T[0]
+                                    B = T[1]
+                                    # print('A:', A.nodes())
 
-                                f = fnr.Map([(h, g)])
+                                    f = fnr.Map([(h, g)])
 
-                                if (len(S) >= len(A)):
+                                    if (len(S) >= len(A)):
 
-                                    count = countRootedSubtrees(A, h, S, g)
-#                                     print('count:', count)
-                                    f.setMult(count)
+                                        count = countRootedSubtrees(A, h, S, g)
+                                        # print('count:', count)
+                                        f.setMult(count)
 
-                                    if (count > 0):
+                                        if (count > 0):
 
-                                        for s in S:
-                                            if (s != g):
-                                                marks_G[s] = True
-#                                                 print(s, 'marked')
+                                            for s in S:
+                                                if (s != g):
+                                                    marks_G[s] = True
+    #                                                 print(s, 'marked')
 
-                                        nx.set_node_attributes(G, marks_G, 'marked')
+                                            nx.set_node_attributes(G, marks_G, 'marked')
 
-#                                         print('f before isoext:', f.getMap())
-                                        iso = fnr.isomorphicExtensions(f, B, G, 0, M)
+                                            # print('f before isoext:', f.getMap())
+                                            iso = fnr.isomorphicExtensions(f, B, G, 0, M)
 
-                                        for s in S:
-                                            if (s != g):
-                                                marks_G[s] = False
-#                                                 print(s, 'unmarked')
+                                            for s in S:
+                                                if (s != g):
+                                                    marks_G[s] = False
+    #                                                 print(s, 'unmarked')
 
-                                        nx.set_node_attributes(G, marks_G, 'marked')
+                                            nx.set_node_attributes(G, marks_G, 'marked')
 
-                                        if(type(iso) == type(f)):
-                                            instances.append(iso)
+                                            if(type(iso) == type(f)):
+                                                instances.append(iso)
 
-                                        else:
-                                            for i in iso:
-                                                instances.append(i)
+                                            else:
+                                                for i in iso:
+                                                    instances.append(i)
 
-#                                         print('instances:', [[tuple(x.getMap()), x.getMult()] for x in iso])
+                                            # print('instances:', [[tuple(x.getMap()), x.getMult()] for x in instances])
 
-                P = list(S.nodes())
-                P.remove(g)
+                for s in S.nodes():
+                    if (G.nodes[s]['coreness'] == 1):
+                        G.remove_node(s)
 
-                for s in P:
-                    G.remove_node(s)
+    # for g in list(G.nodes()):
+    #     if (G.nodes[g]['coreness'] == 1):
+    #         G.remove_node(g)
 
-    for g in list(G.nodes()):
-        if (G.nodes[g]['coreness'] == 1):
-            G.remove_node(g)
-
-#     print('1-shell:', [[tuple(f.getMap()), f.getMult()] for f in instances])
+    # print('1-shell:', [[tuple(f.getMap()), f.getMult()] for f in instances])
 
     total = 0
     for f in instances:
         total = total + f.getMult()
 
+    # print('2-CORE')
     two_core = fnr.findSubgraphInstances(H, G, True)
 
-    # print('1-shell:', total)
-    # print('2-core:', two_core)
+    print('1-shell:', shell_1_counts)
+    print('in-between:', total)
+    print('2-core:', two_core)
 
-    return total + two_core
+    return int(total + two_core + shell_1_counts)
 
 
 # finds symmetry-breaking conditions for H given HE and Aut(H). don't need a labeling function on G
@@ -819,8 +864,29 @@ def depthDegreeSequence(T, root):
     return seq
 
 
+# counts the matchings between every subtree of T with S and stores
+# them in the dictionary
+def countSubtreeMatchings(T, rootT, parentT, S, rootS, dic):
+    dic[rootT] = countRootedSubtrees(T, rootT, S, rootS)
+
+    if (rootT == parentT):
+        children = set(T[rootT])
+    else:
+        children = set(T[rootT]).difference({parentT})
+
+    if (children):
+        for i in children:
+            Ti = detachTree(T, i, rootT)
+            countSubtreeMatchings(Ti, i, rootT, S, rootS, dic)
+    return
+
+
 # returns the subtree of T rooted at r with parent p
+# can work on non-trees, as long as F is a tree
 def subtree(T, r, p):
+    if (r == p):
+        return T
+
     K = nx.Graph()
     K.add_edges_from(T.edges())
     K.remove_edge(r, p)
@@ -841,53 +907,27 @@ def subtree(T, r, p):
     return F
 
 
-# counts the matchings between every subtree of T with S and stores
-# them in the dictionary
-def countSubtreeMatchings(T, rootT, parentT, S, rootS, dic):
-    dic[rootT] = countRootedSubtrees(T, rootT, S, rootS)
-
-    if (rootT == parentT):
-        children = set(T[rootT])
-    else:
-        children = set(T[rootT]).difference({parentT})
-
-    if (children):
-        for i in children:
-            Ti = detachTree(T, i, rootT)
-            countSubtreeMatchings(Ti, i, rootT, S, rootS, dic)
-    return
-
-
 # returns a tree in the 1-shell rooted at root.
 # can select which children to include using select.
-def detachTree(G, root, parent, select=None):
+# use select to properly separate subtrees and 2-core
+def detachTree(G, root, select=None):
     K = nx.Graph()
     K.add_edges_from(G.edges())
 
     children = set()
 
-    if (root == parent):
-        for i in G[root]:
-            if (G.nodes[i]['onion_layer'] < G.nodes[root]['onion_layer']):
-                if (G.nodes[i]['coreness'] == 1):
-                    children.add(i)
-    else:
-        children = set(G[root]).difference({parent})
+    for i in G[root]:
+        if (G.nodes[i]['coreness'] == 1):
+            if (not select or i in select):
+                children.add(i)
 
     T = nx.Graph()
+    T.add_node(root)
 
-    if (select):
-        for c in list(children):
-            if (c not in select):
-                children.remove(c)
-
-    if (children):
-        for i in children:
-            Ti = detachTree(G, i, root)
-            Ti[0].add_edge(i, root)
-            T.add_edges_from(Ti[0].edges())
-    else:
-        T.add_node(root)
+    for i in children:
+        Ti = subtree(K, i, root)
+        T.add_edges_from(Ti.edges())
+        T.add_edge(root, i)
 
     for t in T:
         if (t != root):
@@ -1049,31 +1089,24 @@ def countRootedSubtrees(T, rootT, S, rootS):
     return count
 
 
-# enumerates all subtrees of a tree in H rooted at h
-def enumSubtrees(H, h, sb=False):
+# enumerates all combinations of h's children in T up to symmetry
+def enumSubtrees(T, h, sb=False):
     combos = {}
 
-    if (H.node[h]['coreness'] > 1 and not H.node[h]['is_root']):
-        print('h is not in 1-shell and is not a root')
+    children = list(T[h])
 
-        return
-
-    T = detachTree(H, h, h)
-
-    children = list(T[0][h])
-
-#     print('T', T[0].nodes())
+#     print('T', T.nodes())
 #     print('children', children)
 
-    if (len(T[0].nodes()) == 1):
+    if (len(T.nodes()) == 1):
         combos[0] = {}
 
         return combos
 
     elif (sb):
-        newNode = np.max(T[0].nodes()) + 1
+        newNode = np.max(T.nodes()) + 1
         R = nx.Graph()
-        R.add_edges_from(T[0].edges())
+        R.add_edges_from(T.edges())
         R.add_edges_from([(newNode,h), (newNode,newNode+1), (newNode+1,h)])
 
         P = nx.Graph()
@@ -1085,12 +1118,12 @@ def enumSubtrees(H, h, sb=False):
         reps = list(tClasses.keys())
 
 #         print('reps:', reps)
-#         print('neighbors of h', list(T[0][h]))
+#         print('neighbors of h', list(T[h]))
 
         children = []
 
         for node in reps:
-            if (node in T[0][h]):
+            if (node in T[h]):
                 children = children + [node] * len(tClasses[node])
 
 #         print('children:', children)
@@ -1107,7 +1140,7 @@ def enumSubtrees(H, h, sb=False):
                 y = np.array(x)
 
                 for key in tClasses.keys():
-                    if (key in T[0][h]):
+                    if (key in T[h]):
                         eqList = list(tClasses[key])
 
                         indices = np.where(x==key)
