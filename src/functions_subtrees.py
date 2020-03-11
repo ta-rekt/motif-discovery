@@ -553,14 +553,16 @@ def findSubgraphInstances(strH, strG):
                         if (G.nodes[i]['onion_layer'] > G.nodes[g]['onion_layer']):
                             p = i
 
-                    S = subtree(G, g, p)
+                    if (p >= 0):
 
-                    for h in HE:
-                        count = countRootedSubtrees(H, h, S, g)
+                        S = subtree(G, g, p)
 
-                        if (count > 0):
-                            shell_1_counts += count
-                            # print('root:', g, 'count:', shell_1_counts)
+                        for h in HE:
+                            count = countRootedSubtrees(H, h, S, g)
+
+                            if (count > 0):
+                                shell_1_counts += count
+                                # print('root:', g, 'count:', shell_1_counts)
 
 
             elif (G.nodes[g]['is_root']):
