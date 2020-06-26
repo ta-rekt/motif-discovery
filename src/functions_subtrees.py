@@ -11,6 +11,7 @@ import networkx as nx
 import collections as co
 import random as rnd
 import permanent as per
+import permanent_fast as per_f
 import operator
 from operator import mul
 import itertools as it
@@ -953,7 +954,7 @@ def rectPermanent(M, l, r):
     for e in it.combinations(indices, l):
         ind = [[i+j*(r) for i in e] for j in range(l)]
         A = np.array(np.take(B, ind))
-        p += per.permanent(A)
+        p += per_f.permanent_fast(A)
 
     return p
 
