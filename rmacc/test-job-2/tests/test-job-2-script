@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --time=00:25:00
+#SBATCH --partition=shas-testing
+#SBATCH --ntasks=22
+#SBATCH --job-name=tpt-test-job-2
+#SBATCH --output=tpt-test-job-2.%j.out
+
+module purge
+module load python/3.6.5
+module load loadbalance
+
+source /curc/sw/anaconda3/latest
+conda activate tpt
+
+mpirun lb cmd_file
+
+echo "done"

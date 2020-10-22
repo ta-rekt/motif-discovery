@@ -1,0 +1,4 @@
+python compare_speed.py 6 5 0 5;
+python compare_speed.py 33 5 0 5;
+python compare_speed.py 105 5 0 5;
+python compare_speed.py 256 5 0 5;

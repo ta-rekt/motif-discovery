@@ -6,11 +6,9 @@
 
 import numpy as np
 import pandas as pd
-import scipy as sp
 import networkx as nx
 import collections as co
 import random as rnd
-import permanent as per
 import permanent_fast as per_f
 import operator
 from operator import mul
@@ -491,8 +489,8 @@ def findSubgraphInstances(strH, strG):
     H = parseStringToGraph(strH)
     G = parseStringToGraph(strG)
 
-    H.remove_edges_from(H.selfloop_edges())
-    G.remove_edges_from(G.selfloop_edges())
+    H.remove_edges_from(nx.selfloop_edges(H))
+    G.remove_edges_from(nx.selfloop_edges(G))
 
     G_order = onionDecompose(G)
     onionDecompose(H)

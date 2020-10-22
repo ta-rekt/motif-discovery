@@ -9,7 +9,6 @@ import pandas as pd
 import networkx as nx
 import collections as co
 import random as rnd
-import permanent as per
 import operator
 import itertools as it
 

@@ -1,0 +1,115 @@
+classification of network shapes and characteristics from CommunityFitNet dataset
+
+- size 100-200:
+
+    - sparse 2-core
+
+        - 83 hollywood film music
+        - 372 political books network
+        - 127, 129 malaria var dbla hvr networks
+        - 401 word adjacencies of david copperfield
+        - 142 NCAA college football
+        - 145, 146, 144, 143 norwegian board of directors
+        - 564, 565, 563 mouse suprachiasmatic nucleus
+        - 507, 508 fungal growth networks
+
+    - dense 2-core:
+
+        - 80, 81 high school dynamic contacts
+        - 450, 451, 452 dutch corporate boards
+
+    - small 2-core, deep and sparse 1-shell:
+
+        - 25, 26 binary interactomes
+        - 518, 526, 532, 529, 531, 525, 528, 535 fungal growth networks
+        - 256, 257, 255, 254 norwegian boards of directors
+
+    - small 2-core, shallow and dense 1-shell:
+
+        - 33 C. elegans interactome
+        - 8 binary interactomes
+
+    - medium 2-core, deep and sparse 1-shell:
+
+        - 465, 473, 464, 471, 467, 470, 476, 466 world subways
+        - 517 fungal growth networks
+
+    - medium 2-core, shallow and dense 1-shell:
+
+        - 4 barrett and helenurm plant-pollinator web
+        - 419 aminer citation network
+
+    - large 2-core, shallow and dense 1-shell:
+
+        - 503 route views as graphs
+        - 136 memmott plant-pollinator web
+        - 48 elberling and olesen plant-pollinator web
+        - 118 kevan plant-pollinator web
+        - 134 mccullen plant-polllinator web
+        - 1 arroyo plant-pollinator web
+
+- size 200-300:
+
+    - dense 2-core
+
+        - 39, 38, 37 C. Elegans interactome
+        - 133, 132, 131, 130 Malaria var DBLa HVR network
+
+    - sparse 2-core
+
+        - 513, 506, 514, 511, 509, fungal growth network
+
+    - small 2-core, deep and sparse 1-shell:
+
+        - 527, 524, 519 fungal growth network
+        - 386 Uetz screen yeast interactome
+        - 6, 7 binary interactome (various species)
+
+    - medium 2-core, deep and sparse 1-shell:
+
+        - 468, 469, 477, 474 world subways
+
+    - large 2-core, shallow and dense 1-shell:
+
+        - 413 Garfield's citation network
+
+- size 300-400:
+
+    - dense 2-core
+
+        - 562, 554, 559, 560 Metabolic networks from KEGG
+
+    - sparse 2-core
+
+        - 505, 510, 512, 533, 521 fungal growth network
+        - 147, 148, 149, 156, 151, 153, 155, 152, 154, 150, 157, 258 norwegian board of directors
+
+    - small 2-core, deep and sparse 1-shell:
+
+        - 521, 522, 530, 520, 523 fungal growth network
+        - 31 C. Elegans interactome
+
+    - medium 2-core, deep and sparse 1-shell:
+
+        - 423 london transport network
+
+    - large 2-core, shallow and dense 1-shell:
+
+        - 43 Clements and long plant pollinator web
+
+- size 400-500:
+
+    - dense 2-core
+
+        - 424 european airline network
+        - 541 metabolic networks from KEGG
+        - 387 US airport network
+
+    - medium 2-core, deep and sparse 1-shell:
+
+        - 472 world subways
+
+    - medium 2-core, shallow and dense 1-shell:
+
+        - 112 Ito core yeast interactome
+        - 490 Route views as graphs
