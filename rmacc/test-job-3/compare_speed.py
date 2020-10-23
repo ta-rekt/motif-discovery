@@ -79,8 +79,7 @@ edges = data_edgelists.iloc[networkIndex]
 networkGraph.add_edges_from(edges)
 networkString = graphToString(networkGraph)
 
-networkSize = len(networkGraph)
-
+results = {}
 output = {}
 
 # all query graphs of size k
@@ -89,9 +88,13 @@ for key, val in enumerate(query_data[queryStartIndex:queryEndIndex]):
     spaceIndex = val.find(' ')
     queryKey = val[:spaceIndex]
     queryString = val[spaceIndex+1:].rstrip()
+    networkGraph = parseStringToGraph(networkString)
+    queryGraph = parseStringToGraph(queryString)
+
+    print('queryKey',queryKey,'networkIndex',networkIndex)
 
     start_time_fnr = time.time()
-    out_fnr = fnr_wc.findSubgraphInstances(queryString, networkString, True)
+    out_fnr = fnr_wc.findSubgraphInstances(queryGraph, networkGraph, True)
     delta_fnr = time.time() - start_time_fnr
 
     start_time_fns = time.time()
@@ -99,9 +102,11 @@ for key, val in enumerate(query_data[queryStartIndex:queryEndIndex]):
     delta_fns = time.time() - start_time_fns
 
     if (out_fnr != out_fns):
-        output[networkIndex] = {queryKey: 'error'}
+        output[queryKey] = {'error'}
     else:
-        output[networkIndex] = {queryKey: {'runtime_fnr': delta_fnr,
-                                          'runtime_fns': delta_fns}}
+        output[queryKey] = {'runtime_fnr': delta_fnr,
+                            'runtime_fns': delta_fns}
 
-print(output)
+results[networkIndex] = output
+
+print(results)
