@@ -3,6 +3,8 @@ import networkx as nx
 import time
 import pickle
 import sys
+import signal
+from contextlib import contextmanager
 
 import functions_regular_wc as fnr_wc
 import functions_subtrees_wc as fns_wc
@@ -41,6 +43,7 @@ def parseStringToGraph(s):
 
     return H
 
+
 def graphToString(G):
     edges = list(G.edges())
     string = '['
@@ -54,6 +57,20 @@ def graphToString(G):
 
     return string
 
+
+class TimeoutException(Exception): pass
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+
 # print('helper functions done')
 
 #########################################
@@ -66,6 +83,7 @@ networkIndex = int(sys.argv[1])
 querySize = sys.argv[2]
 queryStartIndex = int(sys.argv[3])      #inclusive
 queryEndIndex = int(sys.argv[4])        #exclusive
+timeout = int(sys.argv[5])
 
 f = open('data/CommunityFitNet_updated.pickle', 'rb')
 data = pickle.load(f)
@@ -91,21 +109,50 @@ for key, val in enumerate(query_data[queryStartIndex:queryEndIndex]):
     networkGraph = parseStringToGraph(networkString)
     queryGraph = parseStringToGraph(queryString)
 
-    print('queryKey',queryKey,'networkIndex',networkIndex)
+    # print('queryKey',queryKey,'networkIndex',networkIndex)
 
     start_time_fnr = time.time()
-    out_fnr = fnr_wc.findSubgraphInstances(queryGraph, networkGraph, True)
-    delta_fnr = time.time() - start_time_fnr
+    try:
+        with time_limit(timeout):
+            out_fnr = fnr_wc.findSubgraphInstances(queryGraph, networkGraph, True)
+            delta_fnr = time.time() - start_time_fnr
+
+    except TimeoutException as e:
+        print('regular: timeout of query', queryKey, 'on network', networkIndex)
+        out_fnr = -1
+        delta_fnr = time.time() - start_time_fnr
 
     start_time_fns = time.time()
-    out_fns = fns_wc.findSubgraphInstances(queryString, networkString)
-    delta_fns = time.time() - start_time_fns
+    try:
+        with time_limit(timeout):
+            out_fns = fns_wc.findSubgraphInstances(queryString, networkString)
+            delta_fns = time.time() - start_time_fns
 
-    if (out_fnr != out_fns):
+    except TimeoutException as e:
+        print('subtrees: timeout of query', queryKey, 'on network', networkIndex)
+        out_fns = -1
+        delta_fns = time.time() - start_time_fns
+
+
+    if (out_fnr != -1 and out_fns != -1):
+        timeout_code = 0
+
+    elif (out_fnr == -1 and out_fns != -1):
+        timeout_code = 1
+
+    elif (out_fnr != -1 and out_fns == -1):
+        timeout_code = 2
+
+    elif (out_fnr == -1 and out_fns == -1):
+        timeout_code = 3
+
+
+    if (out_fnr != out_fns and timeout_code == 0):
         output[queryKey] = {'error'}
     else:
         output[queryKey] = {'runtime_fnr': delta_fnr,
-                            'runtime_fns': delta_fns}
+                            'runtime_fns': delta_fns,
+                            'timeout_code': timeout_code}
 
 results[networkIndex] = output
 
