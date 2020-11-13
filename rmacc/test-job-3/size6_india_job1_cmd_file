@@ -1,0 +1,11 @@
+python compare_speed.py 439 6 0 10;
+python compare_speed.py 439 6 10 20;
+python compare_speed.py 439 6 20 30;
+python compare_speed.py 439 6 30 40;
+python compare_speed.py 439 6 40 50;
+python compare_speed.py 439 6 50 60;
+python compare_speed.py 439 6 60 70;
+python compare_speed.py 439 6 70 80;
+python compare_speed.py 439 6 80 90;
+python compare_speed.py 439 6 90 100;
+python compare_speed.py 439 6 100 112;
