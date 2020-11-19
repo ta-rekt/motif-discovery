@@ -87,7 +87,7 @@
 
 % REQUIRED
 \begin{abstract}
-  We propose a new algorithm for counting the number of subgraphs of a network isomorphic to a given query graph, in the context of network motif search. Vertices of large degree (sometimes called hubs) contribute to a combinatorial explosion in the total number of subgraphs of a network. Interactome networks and scale-free networks tend to possess such high-degree vertices, which translates in motif search being intractable for graph sizes greater than 8 on a wide variety of networks of interest. Our procedure leverages the $k$-core decomposition and a novel subtree-counting technique to quickly scan the periphery of a network, producing significant speedup in the presence of trees and peripheral hubs. Namely, we provide a reduction from counting isomorphic rooted subtrees to computing the permanent of a weighed biadjacency matrix. We provide analytic upper bounds on the algorithm's execution time and test it on a corpus of real network data.
+  We propose a new algorithm for counting the number of subgraphs of a network isomorphic to a given query graph, in the context of network motif search. Vertices of large degree (hubs) contribute to a combinatorial explosion in the total number of subgraphs of a network. Many biological networks and scale-free networks tend to possess such high-degree vertices, which translates in motif search being intractable for graph sizes greater than 7 on a wide variety of networks of interest. Our procedure leverages the $k$-core decomposition and a novel subtree-counting technique to quickly scan the periphery of a network, producing significant speedup in the presence of trees and peripheral hubs. Namely, we provide a reduction from counting isomorphic rooted subtrees to computing the permanent of a weighed biadjacency matrix. We provide analytic upper bounds on the algorithm's execution time, test it on a corpus of real network data, and show that our approach offers vast speedups in the presence of trees and hubs.
 \end{abstract}
 
 % REQUIRED
@@ -108,70 +108,18 @@
 % - counting only, not enumerating
 % - undirected, but easily extended into directed
 
-A network is a useful abstraction for studying structural patterns and properties in many types of systems.
-% Strogatz, Exploring complex networks
-% Newman, Networks
-One way to study such patterns is by identifying repetitions of certain subnetworks, following the reasoning that in many systems, the frequent occurrence of a ``module" is an indicator of its importance in the function of the system. Patterns in a network that appear with statistically significant frequency with respect to a null model (an appropriately defined random network) are called \emph{network motifs}. Examples of networks where motifs have been studied include class diagrams in software architecture
-% Valverde, Solé, Network motifs in computational graphs
-, brain networks
-% Sporns, Kotter, Motifs in brain networks
-, transcriptional regulation networks,
-% Shen-orr, Milo, Mangan, Alon, Network motifs in the transcriptional regulation network...
-and many more
-% Ohnishi, Takayasu, Takayasu, Network motifs in an inter-firm network
-% Albert, Albert, Conserved network motifs allow protein-protein interaction prediction
-% Paulau, Feenders, Blasius, Motif analysis in directed ordered networks and applications to food webs
-% Itzkoviz, Levitt, Kashtan, Milo, Alon, Coarse-graining and self-dissimilarity of complex networks
-.
+A network is a useful abstraction for studying structural patterns and properties in many types of systems
+\cite{strogatz2001exploring, newman2018networks}. One way to study such patterns is by identifying repetitions of certain subnetworks, following the reasoning that in many systems, the frequent occurrence of a ``module" is an indicator of its importance in the function of the system. Patterns in a network that appear with statistically significant frequency with respect to a null model (an appropriately defined random network) are called \emph{network motifs}. Examples of networks where motifs have been studied include class diagrams in software architecture \cite{valverde2005network}, brain networks \cite{sporns2004motifs}, transcriptional regulation networks \cite{shen2002network} and many more \cite{ohnishi2010network, albert2004conserved, paulau2015motif, itzkovitz2005coarse}.
 
-Since their introduction
-% Milo, Shen-orr, Itzkovitz, Kashtan, Network motifs: simple building blocks of complex networks
-, an active line of research has been dedicated to the design of algorithms that search for such motifs ever more efficiently. Most of these algorithms fall under one of two categories: network-centric algorithms, in which all 
-% Milo, Shen-orr, Itzkovitz, Kashtan, Network motifs: simple building blocks of complex networks
-% Kavosh
-% Li, Luo, Xiao, Liang, MTMO an efficient network-centric algorithm
-or a sample
-% Kashtan et al, Subgraph sampling
-% Wernicke, FANMOD
-of size-k subgraphs of a given network are enumerated, and motif-centric algorithms
-% Omidi et al, MODA
-% Grochow, Kellis, Symmetry-breaking
-in which size-k graphs are enumerated \emph{a priori} and mapped onto a network one by one. Typically in the former category, after enumeration, subgraphs are grouped into isomorphic equivalence classes and their frequencies are then calculated or estimated. Two of the advantages of motif-centric approaches is the possibility of searching for the instances of a single subgraph in a network, and the reduced cost of computing isomorphisms for each subgraph incurred in the grouping task of network-centric algorithms. Additional ideas such as symmetry-breaking 
-% Grochow-Kellis
-and expansion trees
-% MODA
-have enabled further speedups, making it possible to search for all subgraphs up to size 8, and individual subgraphs up to size 15
-% Grochow-Kellis
-. The g-trie, introduced in 
-% G-tries first paper
-is an efficient data structure that enables the search for any selection of subgraphs, taking advantage of the common subgraphs within that selection. This minimizes the cost of redundant searches incurred by motif-centric approaches, which execute as many queries as there are subgraphs disregarding their potential similarity, while eliminating the unnecessary isomorphism checks of network subgraph enumeration. This method used in combination with symmetry-breaking produces a vast improvement compared with pre-existing approaches.
-% G-tries systematic experimental tests paper
-. Additional approaches have included focusing only on tree motifs
-% MTMO
-parallelizing the search using GPUs
-% GPU motif-finding
-% Parallel subgraph listing
-.
+Since their introduction \cite{milo2002network}, an active line of research has been dedicated to the design of algorithms that search for such motifs ever more efficiently. Most of these algorithms fall under one of two categories: network-centric algorithms, in which all \cite{milo2002network, kashani2009kavosh, li2018mtmo} or a sample \cite{kashtan2004efficient, wernicke2006fanmod} of size-k subgraphs of a given network are enumerated, and motif-centric algorithms \cite{omidi2009moda, grochow2007network} in which size-k graphs are enumerated \emph{a priori} and mapped onto a network one by one. Typically in the former category, after enumeration, subgraphs are grouped into isomorphic equivalence classes and their frequencies are then calculated or estimated. Two of the advantages of motif-centric approaches is the possibility of searching for the instances of a single subgraph in a network, and the reduced cost of computing isomorphisms for each subgraph incurred in the classification task of network-centric algorithms. Additional ideas such as symmetry-breaking \cite{grochow2007network} and expansion trees \cite{omidi2009moda} have enabled further speedups, making it possible to search for all subgraphs up to size 8, and individual subgraphs up to size 15 \cite{grochow2007network}. The g-trie, introduced in \cite{ribeiro2010g}, is an efficient data structure that enables the search for any selection of subgraphs, taking advantage of the common subgraphs within that selection. This minimizes the cost of redundant searches incurred by motif-centric approaches, which execute as many queries as there are subgraphs, disregarding their potential similarity, while eliminating the unnecessary isomorphism checks of network-centric subgraph enumeration. This method used in combination with symmetry-breaking produces a vast improvement compared with pre-existing approaches \cite{ribeiro2014g}. Additional techniques have included focusing only on tree motifs \cite{li2018mtmo}, parallelizing subgraph enumeration \cite{shao2014parallel} and using GPUs \cite{lin2016network}.
 
-A few remarks serve to lay out our strategy for an improved motif search algorithm. First, we note that existing approaches to motif search all operate by either enumerating or mapping \emph{instances} of subgraphs inside a network. In principle, to discover motifs it would suffice to count all subgraphs of a network, rather than list them. The counting version of the subgraph isomorphism problem, \#\textsc{SubgraphIsomorphism}, asks how many subgraphs of a graph $G$ are isomorphic to another graph $H$. Algorithms for \#\textsc{SubgraphIsomorphism} include
-% Fomin et al, Faster algorithms for finding and counting subgraphs
-and
-% Alon et al, Biomolecular network motif counting and discovery
-. The latter color-coding algorithm achieves polynomial time when counting non-induced subgraphs of bounded treewidth, provided $|H| = O(log(|G|)$. However it was recently proved
-% Curticapean and Marx, only boundedness of vertex cover counts
-that boundedness of the vertex cover number of $H$ is the only condition for tractability of \#\textsc{SubgraphIsomorphism}. Regardless of asymptotic behavior, it is clear that counting subgraphs is faster than listing them, simply owing to the memory access and storage overhead when large numbers of graphs are involved.
+A few remarks serve to lay out our strategy for an improved motif search algorithm. First, we note that existing approaches to motif search all operate by either enumerating or mapping \emph{instances} of subgraphs inside a network. In principle, to discover motifs it would suffice to count all subgraphs of a network, rather than list them. The counting version of the subgraph isomorphism problem, \#\textsc{SubgraphIsomorphism}, asks how many subgraphs of a graph $G$ are isomorphic to another graph $H$. Algorithms for \#\textsc{SubgraphIsomorphism} include \cite{fomin2012faster} and \cite{alon2008biomolecular}. The latter color-coding technique achieves polynomial time when counting non-induced subgraphs of bounded treewidth, provided $|H| = O(log(|G|)$. However it was recently proved \cite{curticapean2014complexity} that boundedness of the vertex cover number of $H$ is the only condition that guarantees tractability for \#\textsc{SubgraphIsomorphism}. Regardless of asymptotic behavior, counting subgraphs is arguably faster than listing them, simply owing to the memory access and storage overhead when large numbers of instances are involved.
 
-Another issue with existing algorithms is that none of them account for the difference in runtime incurred by different subgraph topologies. Early on in the investigation of network motifs, it was found
-% Itzokvitz et al, subgraphs in random networks
-that certain subgraphs contribute disproportionately more to the runtime of a motif search algorithm because of combinatorial explosions due to their shape. A good example is the star graph of size $k+1$, of which there are $\binom{n}{k} \geq (\frac{n}{k})^k$ instances in a star graph of size $n+1$.
+Another issue with existing algorithms is that none of them account for the difference in runtime incurred by different subgraph topologies. Early on in the investigation of network motifs, it was suggested \cite{itzkovitz2003subgraphs} that certain subgraphs could contribute disproportionately more to the runtime of motif search because of combinatorial explosions in the number of times they appear in a network. A good example is the star graph of size $k$, of which there are $\binom{n-1}{k-1}$ instances in a star graph of size $n \geq k$.
 
-Lastly, scale-free networks are known to possess large hierarchically structured hubs
-% Barabasi, Ravasz, Vicsek, Deterministic scale-free networks
-which can quickly make the motif search problem intractable in the contexts where they show up. Putting aside the discussion of the ubiquity of such networks in the real world, many biological networks, where investigations of network motifs originated, often also contain prohibitively large hubs. As we will check experimentally, the runtime of motif search can sometimes be dominated by a single star motif while searching among hundreds or thousands of motifs, especially when the target network contains large hubs. An obvious remedy to this is to simply compute $\binom{n}{k}$ whenever we encounter such a situation.
+Lastly, scale-free networks are known to possess large hierarchically structured hubs \cite{barabasi2001deterministic} which can quickly make the motif search problem intractable in the contexts where such networks show up. Putting aside the discussion of how ubiquitous scale-free networks really are \cite{broido2019scale}, biological networks, where investigations of network motifs originated, often also contain prohibitively large hubs \cite{prvzulj2004modeling} whether their degree distributions are scale-free, geometric, or log-normal. As we will check experimentally, the runtime of motif search can even be dominated by a single star motif while searching among hundreds or thousands of motifs, especially when the target network contains large hubs.
 
-Taking into account the above remarks, we make \#\textsc{SubgraphIsomorphism} our focus in the present paper, and take advantage of both motif and network topology to accelerate subgraph counting. We show that a special case of this problem where the network $G$ and query $H$ are rooted unlabeled trees is \textbf{\#P}-complete. We then build on Grochow-Kellis
-% Grochow-Kellis
-to design a subgraph-counting algorithm that leverages tree and hub structure in a network to efficiently count all instances of a subgraph. Our main contribution consists in separating each of the network and the query into two subsets using the $k$-core decomposition: the ``periphery", which contains all the low-connectedness nodes, and the more interconnected nodes, which can be viewed as ``the core". A key feature of this decomposition is that it guarantees that the periphery consists entirely of trees. This enables us to run the peripheries of both network and query through a fast subtree-counting algorithm, saving considerable time compared with standard motif search procedures. In addition, the same decomposition offers a powerful early abort for motif search; the \emph{coreness} of a vertex imposes a strong constraint on the possible isomorphisms that can map a query graph to a target network, allowing our algorithm to waste less time trying out mappings that do not yield valid instances.
+Taking into account the above remarks, we make \#\textsc{SubgraphIsomorphism} our focus in the present paper, and take advantage of both motif and network topology to accelerate subgraph counting. We show that a special case of this problem where the network $G$ and query $H$ are rooted unlabeled trees is \textbf{\#P}-complete. We then build on Grochow-Kellis \cite{grochow2007network} to design a subgraph-counting algorithm that leverages tree and hub structure in a network. Our main contribution consists in separating each of the network and the query into two subsets using the $k$-core decomposition: the ``periphery", which contains all the low-connectedness nodes, and the more interconnected nodes, which can be viewed as ``the core". A key feature of this decomposition is that it guarantees that the periphery consists entirely of trees. This enables us to run the peripheries of both network and query through a fast subtree-counting algorithm, saving considerable time compared with standard motif search procedures. In addition, the same decomposition offers a powerful early abort for motif search; the \emph{coreness} of a vertex imposes a strong constraint on the possible isomorphisms that can map a query graph to a target network, allowing our algorithm to waste less time trying out mappings that do not yield valid instances. 
 
 In \cref{sec:subtrees} we make the notions of core and periphery rigorous, analyze the time complexity of subtree-counting and provide an algorithm to that end. \Cref{sec:main} introduces our main algorithm and provides an analytic treatment of its performance. We then test the algorithm on a corpus of real networks, and relate its empirical performance to several key network statistics in \cref{sec:experiments}. We conclude in \cref{sec:conclusion}.
 
@@ -181,24 +129,14 @@ In \cref{sec:subtrees} we make the notions of core and periphery rigorous, analy
 
 \subsection{The k-core decomposition}
 \label{subsec:kcore}
-The $k$-core decomposition
-%\textbf{(add ref)}
-is a procedure that reveals the ``core-periphery" structure of a given network. A \emph{$k$-core} is defined as the maximal sub-network that contains only vertices of degree at least $k$. The \emph{$k$-shell} is the set of vertices in the $k$-core that are not part of the $k+1$-core. A vertex inside the $k$-shell is said to be of \emph{coreness k.} The \emph{degeneracy} of a network is the maximal coreness of any of its vertices. The $k$-core decomposition can be carried out in linear time as follows: remove all vertices of degree $1$ until there are none left. Those vertices constitute the 1-shell. Make additional passes removing all vertices of degree at most $k$ at each pass, labeling each vertex with its coreness $k$.
+The $k$-core decomposition \cite{kong2019k} is a procedure that reveals the ``core-periphery" structure of a given network. A \emph{$k$-core} is defined as the maximal sub-network that contains only vertices of degree at least $k$. The \emph{$k$-shell} is the set of vertices in the $k$-core that are not part of the $k+1$-core. A vertex inside the $k$-shell is said to be of \emph{coreness k.} The \emph{degeneracy} of a network is the maximal coreness of any of its vertices. The $k$-core decomposition can be carried out in linear time as follows: remove all vertices of degree $1$ until there are none left. Those vertices constitute the 1-shell. Make additional passes removing all vertices of degree at most $k$ at each pass, labeling each vertex with its coreness $k$.
 
 In any network with degeneracy 2 or more, the 1-shell consists entirely of trees, each of whose root belongs to the 2-core.
 %\textbf{(add sketch)}
-To see why, notice that no tree can contain a nontrivial subgraph where every vertex is of degree 2 or more. Performing a $k$-core decomposition on $H$ and $G$ reveals these trees, if they exist. By selecting one root at a time from each of $H$ and $G$'s 1-shell trees, we can then run a subtree-counting algorithm as a subroutine to any standard motif-centric algorithm. We build on the Grochow-Kellis symmetry-breaking algorithm,
-%\textbf{(add ref)}
-but in principle our subtree-counting technique can be used with any standard motif-centric algorithm, with minor modifications.
-%\textbf{(add refs)}
-In the following we discuss the computational complexity of subtree-counting and motivate its use in the context of motif search.
+To see why, notice that no tree can contain a nontrivial subgraph where every vertex is of degree 2 or more. Performing a $k$-core decomposition on $H$ and $G$ reveals these trees, if they exist. By selecting one root at a time from each of $H$ and $G$'s 1-shell trees, we can then run a subtree-counting algorithm as a subroutine to any standard motif-centric algorithm. We build on the Grochow-Kellis symmetry-breaking algorithm \cite{grochow2007network}, but in principle our subtree-counting technique can be used with any standard motif-centric algorithm. In practice however, there are subtleties of implementation that have to do with with symmetry-breaking and the 1-shell/2-core boundary that should be taken care of, and will be discussed in what follows. In the following we discuss the computational complexity of subtree-counting and motivate its use in the context of motif search.
 
 \subsection{Complexity of counting subtrees}
-Given two rooted, unlabeled trees $T$ and $S$, we define \#\textsc{RootedSubtrees} as the problem of counting the number of subtrees of $S$ isomorphic to $T$. This problem is \textbf{\#P}-complete, as we prove in \cref{thm:subtree_count} via a reduction from \#\textsc{ImperfectMatchings}, the problem of counting the number of matchings in a bipartite graph. The latter problem was proved \textbf{\#P}-complete by Valiant.
-%\textbf{(add ref)}
-As in Valiant,
-%\textbf{(add ref)}
-we define a counting Turing machine as a standard nondeterministic TM that can output the count of its accepting configurations on an auxiliary tape. We write A $\leq_T$ B if language A is Turing-reducible to language B, $T \preceq S$ if there exists a root-preserving isomorphism between tree $T$ and a subtree of $S$, and $T \preceq ! \, S$ if such an isomorphism is unique up to the symmetries of $T$.
+Given two rooted, unlabeled trees $T$ and $S$, we define \#\textsc{RootedSubtreeIsomorphism} as the problem of counting the number of subtrees of $S$ isomorphic to $T$. This problem is \textbf{\#P}-complete, as we prove in \cref{thm:subtree_count} via a reduction from \#\textsc{ImperfectMatchings}, the problem of counting the number of matchings in a bipartite graph. The latter problem was proved \textbf{\#P}-complete by Valiant \cite{valiant1979complexity}. As does Valiant, we define a counting Turing machine as a standard nondeterministic TM that can output the count of its accepting configurations on an auxiliary tape. We write A $\leq_T$ B if language A is Turing-reducible to language B, $T \preceq S$ if there exists a root-preserving isomorphism between tree $T$ and a subtree of $S$, and $T \preceq ! \, S$ if such an isomorphism is unique up to the symmetries of $T$.
 
 \begin{figure}[tphb]\label{fig:equiv_example}
 	\centering
@@ -572,15 +510,13 @@ we define a counting Turing machine as a standard nondeterministic TM that can o
 \end{figure}
 
 \begin{theorem}\label{thm:subtree_count}
-  \#\textsc{RootedSubtrees} is \textbf{\#\textsc{P}}-complete. 
+  \#\textsc{RootedSubtreeIsomorphism} is \textbf{\#\textsc{P}}-complete. 
 \end{theorem}
 
 \begin{proof}
-  Let $S$ and $T$ be two rooted, unlabeled trees. Membership in \textbf{\#P} is easy to verify: consider a counting Turing machine that removes leaves from $S$ nondeterministically and checks for tree isomorphism with $T$ in polynomial time using preorder strings.
-%\textbf{(add ref)}
-The number of accepting configurations is equal to the number of instances of $T$ in $S$.
+  Let $S$ and $T$ be two rooted, unlabeled trees. Membership in \textbf{\#P} is easy to verify: consider a counting Turing machine that removes leaves from $S$ nondeterministically and checks for tree isomorphism with $T$ in linear time by simply comparing preorder traversal sequences. The number of accepting configurations is equal to the number of instances of $T$ in $S$.
   
-  Let $B = (L, R, E)$ be a bipartite graph where $L$ and $R$ are respectively the sets of left and right vertices, and $E =  \{(u,v) | u \in L, v \in R\}$ is the set of edges. To show that \#\textsc{ImperfectMatchings} $\leq_T$ \#\textsc{RootedSubtrees}, we construct a tree $T_u$ for each vertex $u \in L$, and a tree $S_v$ for each $v \in R$ (see \cref{fig:equiv_example}), such that
+  Let $B = (L, R, E)$ be a bipartite graph where $L$ and $R$ are respectively the sets of left and right vertices, and $E =  \{(u,v) | u \in L, v \in R\}$ is the set of edges. To show that \#\textsc{ImperfectMatchings} $\leq_T$ \#\textsc{RootedSubtreeIsomorphism}, we construct a tree $T_u$ for each vertex $u \in L$, and a tree $S_v$ for each $v \in R$ (see \cref{fig:equiv_example}), such that
 \begin{equation}\label{eq:bipartite_equiv}
   (u,v) \in E \iff T_u \preceq! \, S_v
 \end{equation}
@@ -588,15 +524,19 @@ The number of accepting configurations is equal to the number of instances of $T
   
   We construct the $\{T_u\}_{u \in L}$ trees as follows: $\forall i \in \{1, \dots, |L|\}$, $T_{u_i}$ has $i$ depth-1 vertices, and each of those has $|L| - i + 1$ children. For the $\{S_v\}$ trees, $\forall j \in \{1, \dots, |R|\}$, $S_{v_j}$ has exactly $|L|$ depth-1 vertices. We then populate the children of those vertices by ``inserting" one copy of $T_{u_i}$ into $S_{v_j}$ if and only if $(u_i, v_j) \in E$; in other words, $i$ among $S_{v_j}$'s depth-1 vertices has at least $|L| - i + 1$ children, and the remaining $|L| - i$ depth-1 vertices have no children. This construction guarantees that at most one instance of $T_{v_i}$ appears in $S_{v_j}$.
   
-  Now if a Turing machine can query an oracle for \#\textsc{RootedSubtrees} on instance $(T, S)$, the answer is equal to the number of bipartite matchings in graph $B$, thus establishing the result.
+  Now if a Turing machine can query an oracle for \#\textsc{RootedSubtreeIsomorphism} on instance $(T, S)$, the answer is equal to the number of bipartite matchings in graph $B$, thus establishing the result.
 \end{proof}
 
+Like bipartite matching, this result is surprising considering that its corresponding decision problem, RootedSubtreeIsomorphism, is in \textbf{P}. In fact, there exists an algorithm that solves it in time linear in the size of the target tree \cite{luccio2001exact}.
+
 \subsection{Description of the subtree-counting algorithm}
-Valiant showed
-%\textbf{(add ref)}
-that the number of matchings of a bipartite graph is equal to the permanent of its adjacency matrix. We use that fact and the above reduction to propose a subtree-counting algorithm that leverages Ryser's formula for the permanent
-%\textbf{(add ref)}
-to achieve drastic speedup when compared with regular motif search algorithms running on trees.
+Valiant showed \cite{valiant1979permanent} that the number of matchings of a bipartite graph is equal to the permanent of its (0,1)-adjacency matrix. In a weighed bipartite graph $B$ with an adjacency matrix $M = (m_{ij})$, if we define the weight of a matching $s$ as the product of the weights of all its edges
+
+\begin{equation}\label{eq:weighed_bipartite}
+  w(s) = \prod_{i=1}m_{i,s(i)}
+\end{equation}
+
+then the permanent of $M$ is the sum of the weights of all matchings of $B$. We use this fact and the above reduction to propose a subtree-counting algorithm that leverages Ryser's formula for the permanent \cite{ryser1963combinatorial} to achieve drastic speedup when compared with regular motif search algorithms running on trees.
 
 \begin{algorithm}
 \caption{\textsc{CountRootedSubtrees}$(T, S, t, s, D)$}
@@ -633,17 +573,13 @@ Next, the algorithm checks for the base case, where the tree $T$ consists of onl
 \begin{equation}
 	perm(M) = \sum_{k=0}^{n-1}(-1)^k\Sigma_k
 \end{equation}
-where $\Sigma_k$ is obtained by summing the products of the row-sums of $A_k$, the matrix obtained by deleting $k$ rows from $M$, for all combinations of rows. The worst-case time complexity of using Ryser's formula for the permanent is $O(2^{n-1}n^2)$.
-%\textbf{(add ref)}
-However, to get an idea of how much faster \cref{alg:buildtree} is than regular motif search over trees, see \textbf{(add empirical speed comparison)}.
+where $\Sigma_k$ is obtained by summing the products of the row-sums of $A_k$, the matrix obtained by deleting $k$ rows from $M$, for all combinations of rows. The worst-case time complexity of using Ryser's formula for the permanent is $O(2^{n-1}n^2)$ \cite{ryser1963combinatorial}. However, to get an idea of how much faster \cref{alg:buildtree} is than regular motif search over trees, see \textbf{(add empirical speed comparison)}.
 
 \section{The subgraph-counting algorithm}
 \label{sec:main}
 
 \subsection{Boundary conditions}
-Recall from the introduction that our method consists in separating the 1-shell from the 2-core and performing subtree-counting on the former, then running a regular motif search algorithm on the latter. In doing so we must take care of a few boundary cases that arise at the interface between the 1-shell and the 2-core \textbf{(add figure to visualize 1-shell and 2-core)}. To see why, let $H = (C_H, P_H)$ be a query graph and $G = (C_G, P_G)$ be a network, where $C$ and $P$ refer respectively to the 2-core and the 1-shell. An instance of $H$ could appear ``halfway" between the 1-shell and the 2-core of $G$ such that only part of $P_H$ extends into $P_G$.  Because of this, to properly count every instance of $H$ in $G$, we must run each tree $T_H \in P_H$ as well as all of its subtrees through \cref{alg:buildtree}. By using the symmetry-breaking technique introduced in
-%\textbf{(add ref)}
-on $T_H$, we can cut down the cost incurred by enumerating all possible subtrees by an amount proportional to the product of the number of symmetries at each level of trees of $P_H$.
+Recall from the introduction that our method consists in separating the 1-shell from the 2-core and performing subtree-counting on the former, then running a regular motif search algorithm on the latter. In doing so we must take care of a few boundary cases that arise at the interface between the 1-shell and the 2-core \textbf{(add figure to visualize 1-shell and 2-core)}. To see why, let $H = (C_H, P_H)$ be a query graph and $G = (C_G, P_G)$ be a network, where $C$ and $P$ refer respectively to the 2-core and the 1-shell. An instance of $H$ could appear ``halfway" between the 1-shell and the 2-core of $G$ such that only part of $P_H$ extends into $P_G$.  Because of this, to properly count every instance of $H$ in $G$, we must run each tree $T_H \in P_H$ as well as all of its subtrees through \cref{alg:buildtree}. By using the symmetry-breaking technique introduced in \cite{grochow2007network} on $T_H$, we can cut down the cost incurred by enumerating all possible subtrees by an amount proportional to the product of the number of symmetries at each level of trees of $P_H$.
 
 On the flip side, another boundary condition provides us with a powerful early abort when searching for instances of $H$ inside $G$: suppose that $H$ appears halfway between $C_G$ and $P_G$, only this time $C_H$ extends partially into $P_G$. As we prove below, this cannot happen. In fact, it cannot happen between a $k$-core in $H$ and an $h$-shell in $G$ for any integers $h < k$ without violating induced isomorphism, which we require in the formal definition of ``an instance of $H$ inside $G$".
 
@@ -664,12 +600,8 @@ On the flip side, another boundary condition provides us with a powerful early a
 We can use this fact to create an early abort by coreness: our algorithm should never bother to try to map a vertex in $H$ to another in $G$ with lesser coreness.
 
 \subsection{Main result}
-We build on the symmetry-breaking algorithm introduced by Grochow and Kellis,
-%\textbf{(add ref)}
-and refer to the algorithms from their paper by the same name. \textsc{CountSubgraphs} (\cref{alg:countsubgraphs}) takes in two graphs $H$ and $G$, and returns the number of images of $H$ that appear in $G$. It starts by running a $k$-core decomposition on both graphs. Then, as in the Grochow-Kellis algorithm, it finds all automorphisms from $H$ onto itself by calling \textsc{FindSubgraphInstances($H, H$)},
-%\textbf{(add ref)}
-groups the nodes that map to each other in the same equivalence class and returns a representative node from each class. We abbreviate this behavior in the function \emph{findEquivalenceClassRepresentatives}. The symmetry-breaking conditions are also computed similarly as in Grochow-Kellis.
-%\textbf{(add ref)}.
+We build on the Grochow-Kellis symmetry-breaking algorithm, and refer to the function from their paper by the same name. \cref{alg:countsubgraphs} takes in two graphs $H$ and $G$, and returns the number of images of $H$ that appear in $G$. It starts by running a $k$-core decomposition on both graphs. Then, as in the Grochow-Kellis algorithm, it finds all automorphisms from $H$ onto itself by calling \textsc{FindSubgraphInstances($H, H$)} \cite{grochow2007network}, groups the nodes that map to each other in the same equivalence class and returns a representative node from each class. We abbreviate this behavior in the function \emph{findEquivalenceClassRepresentatives}. The symmetry-breaking conditions are also computed similarly as in \cite{grochow2007network}.
+
 
 The next part of the algorithm consists in listing all the subtrees of the 1-shell of $H$, up to symmetry. This is done by the function \emph{enumerateSubtrees}, which stores them in the dictionary \emph{subtrees}, keyed by the nodes in $H$ at which they are rooted. It does this by again making use of symmetry-breaking, and listing only one tree from each equivalence class of symmetries.
 
@@ -722,9 +654,7 @@ The next part of the algorithm consists in listing all the subtrees of the 1-she
 
 \end{algorithmic}
 \end{algorithm}
-The algorithm proceeds to count the subtrees of $H$ that appear in $G$'s 1-shell and at the boundary with its 2-core. It loops through all of $G$'s nodes in the same order as the $k$-core decomposition to quickly scan the 1-shell nodes and then remove them, making the subsequent 2-core search more tractable. We make use of the function $f$, which represents the partial isomorphism between a subset of $H$ and $G$ as the algorithm progresses in its search. For the boundary case, we associate each $f$ with a multiplier, which simply consists of a count of the number of subtrees that ``extend" from $f$ into the 1-shell of $G$. \textsc{IsomorphicExtensions} is a function introduced in Grochow-Kellis
-%\textbf{(add ref)}
-which incrementally extends $f$ one vertex at a time until it maps the entirety of $H$ onto a subset of $G$. By using the multiplier, we can initialize $f$ from a root of $G$ and let it expand inward into the 2-core, and use \textsc{CountRootedSubtrees} to count partial instances of $H$ in the 1-shell. At the end of the search, we multiply the number of instances found by \textsc{IsomorphicExtensions} by their individual multipliers to recover the total number of boundary instances. The vertices scanned by the subtree-counting routine are marked to prevent $f$ extending into the 1-shell. After all the 1-shell vertices are taken care of, they are removed and only the 2-core of $G$ remains.
+The algorithm proceeds to count the subtrees of $H$ that appear in $G$'s 1-shell and at the boundary with its 2-core. It loops through all of $G$'s nodes in the same order as the $k$-core decomposition to quickly scan the 1-shell nodes and then remove them, making the subsequent 2-core search more tractable. We make use of the function $f$, which represents the partial isomorphism between a subset of $H$ and $G$ as the algorithm progresses in its search. For the boundary case, we associate each $f$ with a multiplier, which simply consists of a count of the number of subtrees that ``extend" from $f$ into the 1-shell of $G$. \textsc{IsomorphicExtensions} is a function introduced in \cite{grochow2007network} which incrementally extends $f$ one vertex at a time until it maps the entirety of $H$ onto a subset of $G$. By using the multiplier, we can initialize $f$ from a root of $G$ and let it expand inward into the 2-core, and use \textsc{CountRootedSubtrees} to count partial instances of $H$ in the 1-shell. At the end of the search, we multiply the number of instances found by \textsc{IsomorphicExtensions} by their individual multipliers to recover the total number of boundary instances. The vertices scanned by the subtree-counting routine are marked to prevent $f$ extending into the 1-shell. After all the 1-shell vertices are taken care of, they are removed and only the 2-core of $G$ remains.
 
 Note that here we use a slightly modified version of \textsc{IsomorphicExtensions} that accounts for the early abort by coreness feature discussed above. Namely, when searching for an image vertex $g \in G$, \textsc{IsomorphicExtensions} first checks the coreness of $g$ to ensure that it is greater or equal than the coreness of its tentative preimage $h$.
 
@@ -765,6 +695,9 @@ We implemented the Grochow-Kellis algorithm and \cref{alg:countsubgraphs} in Pyt
 
 \subsection{Results and discussion}
 \label{sec:results}
+
+% discussion
+We believe that our subtree-counting approach can easily be added to current state-of-the-art motif-centric algorithms, and even the g-tries algorithm, with a small adaptation. We note however that there are subtleties in implementation, namely when it comes to handling symmetry breaking across the 1-shell/2-core boundary.
 
 \section{Conclusion}
 \label{sec:conclusion}

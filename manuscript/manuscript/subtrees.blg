@@ -3,44 +3,44 @@ Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
 The top-level auxiliary file: subtrees.aux
 The style file: siamplain.bst
 Database file #1: references.bib
-You've used 2 entries,
+You've used 32 entries,
             2244 wiz_defined-function locations,
-            554 strings with 4240 characters,
-and the built_in function-call counts, 957 in all, are:
-= -- 96
-> -- 26
+            749 strings with 9451 characters,
+and the built_in function-call counts, 14014 in all, are:
+= -- 1305
+> -- 611
 < -- 0
-+ -- 12
-- -- 8
-* -- 70
-:= -- 128
-add.period$ -- 2
-call.type$ -- 2
-change.case$ -- 10
++ -- 242
+- -- 208
+* -- 1024
+:= -- 1957
+add.period$ -- 32
+call.type$ -- 32
+change.case$ -- 198
 chr.to.int$ -- 0
-cite$ -- 2
-duplicate$ -- 50
-empty$ -- 83
-format.name$ -- 8
-if$ -- 217
+cite$ -- 32
+duplicate$ -- 732
+empty$ -- 1161
+format.name$ -- 208
+if$ -- 3120
 int.to.chr$ -- 0
-int.to.str$ -- 2
-missing$ -- 2
-newline$ -- 9
-num.names$ -- 4
-pop$ -- 12
+int.to.str$ -- 32
+missing$ -- 33
+newline$ -- 99
+num.names$ -- 64
+pop$ -- 297
 preamble$ -- 1
-purify$ -- 8
+purify$ -- 168
 quote$ -- 0
-skip$ -- 46
+skip$ -- 584
 stack$ -- 0
-substring$ -- 92
-swap$ -- 24
+substring$ -- 980
+swap$ -- 306
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 8
+type$ -- 124
 warning$ -- 0
-while$ -- 10
-width$ -- 3
-write$ -- 22
+while$ -- 141
+width$ -- 34
+write$ -- 289

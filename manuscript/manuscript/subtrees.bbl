@@ -1,15 +1,152 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 
-\bibitem{testArticle1}
-{\sc T.~G. Kolda and J.~R. Mayo}, {\em An adaptive shifted power method for
-  computing generalized tensor eigenpairs}, SIAM Journal on Matrix Analysis and
-  Applications, 35 (2014), pp.~1563--1581,
-  \url{https://doi.org/10.1137/140951758}.
+\bibitem{albert2004conserved}
+{\sc I.~Albert and R.~Albert}, {\em Conserved network motifs allow
+  protein--protein interaction prediction}, Bioinformatics, 20 (2004),
+  pp.~3346--3352.
 
-\bibitem{testArticle2}
-{\sc T.~G. Kolda and J.~R. Mayo}, {\em An adaptive shifted power method for
-  computing generalized tensor eigenpairs}, SIAM Journal on Matrix Analysis and
-  Applications, 35 (2014), pp.~1563--1581,
-  \url{https://doi.org/10.1137/140951758}.
+\bibitem{alon2008biomolecular}
+{\sc N.~Alon, P.~Dao, I.~Hajirasouliha, F.~Hormozdiari, and S.~C. Sahinalp},
+  {\em Biomolecular network motif counting and discovery by color coding},
+  Bioinformatics, 24 (2008), pp.~i241--i249.
+
+\bibitem{barabasi2001deterministic}
+{\sc A.-L. Barab{\'a}si, E.~Ravasz, and T.~Vicsek}, {\em Deterministic
+  scale-free networks}, Physica A: Statistical Mechanics and its Applications,
+  299 (2001), pp.~559--564.
+
+\bibitem{broido2019scale}
+{\sc A.~D. Broido and A.~Clauset}, {\em Scale-free networks are rare}, Nature
+  communications, 10 (2019), pp.~1--10.
+
+\bibitem{curticapean2014complexity}
+{\sc R.~Curticapean and D.~Marx}, {\em Complexity of counting subgraphs: Only
+  the boundedness of the vertex-cover number counts}, in 2014 IEEE 55th Annual
+  Symposium on Foundations of Computer Science, IEEE, 2014, pp.~130--139.
+
+\bibitem{fomin2012faster}
+{\sc F.~V. Fomin, D.~Lokshtanov, V.~Raman, S.~Saurabh, and B.~R. Rao}, {\em
+  Faster algorithms for finding and counting subgraphs}, Journal of Computer
+  and System Sciences, 78 (2012), pp.~698--706.
+
+\bibitem{grochow2007network}
+{\sc J.~A. Grochow and M.~Kellis}, {\em Network motif discovery using subgraph
+  enumeration and symmetry-breaking}, in Annual International Conference on
+  Research in Computational Molecular Biology, Springer, 2007, pp.~92--106.
+
+\bibitem{itzkovitz2005coarse}
+{\sc S.~Itzkovitz, R.~Levitt, N.~Kashtan, R.~Milo, M.~Itzkovitz, and U.~Alon},
+  {\em Coarse-graining and self-dissimilarity of complex networks}, Physical
+  Review E, 71 (2005), p.~016127.
+
+\bibitem{itzkovitz2003subgraphs}
+{\sc S.~Itzkovitz, R.~Milo, N.~Kashtan, G.~Ziv, and U.~Alon}, {\em Subgraphs in
+  random networks}, Physical review E, 68 (2003), p.~026127.
+
+\bibitem{kashani2009kavosh}
+{\sc Z.~R.~M. Kashani, H.~Ahrabian, E.~Elahi, A.~Nowzari-Dalini, E.~S. Ansari,
+  S.~Asadi, S.~Mohammadi, F.~Schreiber, and A.~Masoudi-Nejad}, {\em Kavosh: a
+  new algorithm for finding network motifs}, BMC bioinformatics, 10 (2009),
+  pp.~1--12.
+
+\bibitem{kashtan2004efficient}
+{\sc N.~Kashtan, S.~Itzkovitz, R.~Milo, and U.~Alon}, {\em Efficient sampling
+  algorithm for estimating subgraph concentrations and detecting network
+  motifs}, Bioinformatics, 20 (2004), pp.~1746--1758.
+
+\bibitem{kong2019k}
+{\sc Y.-X. Kong, G.-Y. Shi, R.-J. Wu, and Y.-C. Zhang}, {\em K-core: Theories
+  and applications}, Physics Reports, 832 (2019), pp.~1--32.
+
+\bibitem{li2018mtmo}
+{\sc G.~Li, J.~Luo, Z.~Xiao, and C.~Liang}, {\em Mtmo: an efficient
+  network-centric algorithm for subtree counting and enumeration}, Quantitative
+  Biology, 6 (2018), pp.~142--154.
+
+\bibitem{lin2016network}
+{\sc W.~Lin, X.~Xiao, X.~Xie, and X.-L. Li}, {\em Network motif discovery: A
+  gpu approach}, IEEE transactions on knowledge and data engineering, 29
+  (2016), pp.~513--528.
+
+\bibitem{luccio2001exact}
+{\sc F.~Luccio, A.~Mesa~Enriquez, P.~Olivares~Rieumont, and L.~Pagli}, {\em
+  Exact rooted subtree matching in sublinear time}, 2001.
+
+\bibitem{milo2002network}
+{\sc R.~Milo, S.~Shen-Orr, S.~Itzkovitz, N.~Kashtan, D.~Chklovskii, and
+  U.~Alon}, {\em Network motifs: simple building blocks of complex networks},
+  Science, 298 (2002), pp.~824--827.
+
+\bibitem{newman2018networks}
+{\sc M.~Newman}, {\em Networks}, Oxford university press, 2018.
+
+\bibitem{ohnishi2010network}
+{\sc T.~Ohnishi, H.~Takayasu, and M.~Takayasu}, {\em Network motifs in an
+  inter-firm network}, Journal of Economic Interaction and Coordination, 5
+  (2010), pp.~171--180.
+
+\bibitem{omidi2009moda}
+{\sc S.~Omidi, F.~Schreiber, and A.~Masoudi-Nejad}, {\em Moda: an efficient
+  algorithm for network motif discovery in biological networks}, Genes \&
+  genetic systems, 84 (2009), pp.~385--395.
+
+\bibitem{paulau2015motif}
+{\sc P.~V. Paulau, C.~Feenders, and B.~Blasius}, {\em Motif analysis in
+  directed ordered networks and applications to food webs}, Scientific reports,
+  5 (2015), p.~11926.
+
+\bibitem{prvzulj2004modeling}
+{\sc N.~Pr{\v{z}}ulj, D.~G. Corneil, and I.~Jurisica}, {\em Modeling
+  interactome: scale-free or geometric?}, Bioinformatics, 20 (2004),
+  pp.~3508--3515.
+
+\bibitem{ribeiro2010g}
+{\sc P.~Ribeiro and F.~Silva}, {\em G-tries: an efficient data structure for
+  discovering network motifs}, in Proceedings of the 2010 ACM symposium on
+  applied computing, 2010, pp.~1559--1566.
+
+\bibitem{ribeiro2014g}
+{\sc P.~Ribeiro and F.~Silva}, {\em G-tries: a data structure for storing and
+  finding subgraphs}, Data Mining and Knowledge Discovery, 28 (2014),
+  pp.~337--377.
+
+\bibitem{ryser1963combinatorial}
+{\sc H.~J. Ryser}, {\em Combinatorial mathematics}, vol.~14, American
+  Mathematical Soc., 1963.
+
+\bibitem{shao2014parallel}
+{\sc Y.~Shao, B.~Cui, L.~Chen, L.~Ma, J.~Yao, and N.~Xu}, {\em Parallel
+  subgraph listing in a large-scale graph}, in Proceedings of the 2014 ACM
+  SIGMOD International Conference on Management of Data, 2014, pp.~625--636.
+
+\bibitem{shen2002network}
+{\sc S.~S. Shen-Orr, R.~Milo, S.~Mangan, and U.~Alon}, {\em Network motifs in
+  the transcriptional regulation network of escherichia coli}, Nature genetics,
+  31 (2002), pp.~64--68.
+
+\bibitem{sporns2004motifs}
+{\sc O.~Sporns and R.~K{\"o}tter}, {\em Motifs in brain networks}, PLoS Biol, 2
+  (2004), p.~e369.
+
+\bibitem{strogatz2001exploring}
+{\sc S.~Strogatz}, {\em Exploring complex networks}, nature, 410 (2001),
+  pp.~268--276.
+
+\bibitem{valiant1979permanent}
+{\sc L.~G. Valiant}, {\em The complexity of computing the permanent},
+  Theoretical computer science, 8 (1979), pp.~189--201.
+
+\bibitem{valiant1979complexity}
+{\sc L.~G. Valiant}, {\em The complexity of enumeration and reliability
+  problems}, SIAM Journal on Computing, 8 (1979), pp.~410--421.
+
+\bibitem{valverde2005network}
+{\sc S.~Valverde and R.~V. Sol{\'e}}, {\em Network motifs in computational
+  graphs: A case study in software architecture}, Physical Review E, 72 (2005),
+  p.~026107.
+
+\bibitem{wernicke2006fanmod}
+{\sc S.~Wernicke and F.~Rasche}, {\em Fanmod: a tool for fast network motif
+  detection}, Bioinformatics, 22 (2006), pp.~1152--1153.
 
 \end{thebibliography}
