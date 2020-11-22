@@ -620,7 +620,7 @@ def findSubgraphInstances(strH, strG):
                                                 for i in iso:
                                                     instances.append(i)
 
-                                            print('instances:', [[tuple(x.getMap()), x.getMult()] for x in instances])
+                                            # print('instances:', [[tuple(x.getMap()), x.getMult()] for x in instances])
 
                 for s in S.nodes():
                     if (G.nodes[s]['coreness'] == 1):

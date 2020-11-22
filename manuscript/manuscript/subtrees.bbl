@@ -29,6 +29,11 @@
   Faster algorithms for finding and counting subgraphs}, Journal of Computer
   and System Sciences, 78 (2012), pp.~698--706.
 
+\bibitem{goldberg2000counting}
+{\sc L.~A. Goldberg and M.~Jerrum}, {\em Counting unlabelled subtrees of a tree
+  is\# p-complete}, LMS Journal of Computation and Mathematics, 3 (2000),
+  pp.~117--124.
+
 \bibitem{grochow2007network}
 {\sc J.~A. Grochow and M.~Kellis}, {\em Network motif discovery using subgraph
   enumeration and symmetry-breaking}, in Annual International Conference on
@@ -67,10 +72,6 @@
 {\sc W.~Lin, X.~Xiao, X.~Xie, and X.-L. Li}, {\em Network motif discovery: A
   gpu approach}, IEEE transactions on knowledge and data engineering, 29
   (2016), pp.~513--528.
-
-\bibitem{luccio2001exact}
-{\sc F.~Luccio, A.~Mesa~Enriquez, P.~Olivares~Rieumont, and L.~Pagli}, {\em
-  Exact rooted subtree matching in sublinear time}, 2001.
 
 \bibitem{milo2002network}
 {\sc R.~Milo, S.~Shen-Orr, S.~Itzkovitz, N.~Kashtan, D.~Chklovskii, and

@@ -353,6 +353,8 @@ def checkSBC(m, n, M, f):
     if (m in M.keys()):
         value = M[m]
 
+        # print('m is a key')
+
         if (value):  # case 1
             images = [f.applyMap(k) for k in value] # {L(k)|k in values}
 
@@ -376,7 +378,7 @@ def checkSBC(m, n, M, f):
                         else:
                             if (f.applyMap(k) > n):
 
-                                # print('violates to sbc. node rejected')
+                                # print('violates sbc. node rejected')
                                 # printSBC(m, n, M, f)
                                 # print('f(key of m)')
                                 # print(f.applyMap(k))
@@ -410,6 +412,8 @@ def checkSBC(m, n, M, f):
     if (m in k for k in M.values()):   # case 2
         keys = [list(M.keys())[list(M.values()).index(k)] for k in M.values() if m in k]
 
+        # print('m is a value')
+
         for k in keys:
             if (f.applyMap(k) < 0):
 
@@ -421,7 +425,7 @@ def checkSBC(m, n, M, f):
             else:
                 if (f.applyMap(k) > n):
 
-                    # print('violates to sbc. node rejected')
+                    # print('violates sbc. node rejected')
                     # printSBC(m, n, M, f)
                     # print('f(key of m)')
                     # print(f.applyMap(key))
@@ -509,11 +513,12 @@ def findSubgraphInstances(H, G, withSBC=True):
 
     for g in sorted(list(G.nodes())):
         # print('g:', g)
-        for h in H:
+        for h in sorted(list(H.nodes())):
             # print('h:', h)
             # print('cansupport', g, ' ', h, canSupport(h, g, H, G))
             if(canSupport(h, g, H, G)):
                 f = Map([(h, g)])  # initialize partial map with f(h) = g. argument must be list
+
                 iso = isomorphicExtensions(f, H, G, 1, M)  # M
 
                 if(type(iso) == type(f)):  # sometimes iso is single element
@@ -562,8 +567,8 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     if(set(D) == set(H.nodes())):
 
-        # for c in range(call):
-        #     print('   ',end='')
+        for c in range(call):
+            print('   ',end='')
         # print('INSTANCE FOUND ON CALL #', end='')
         # print(call)
 
@@ -610,7 +615,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
             # print('partial map: ')
             # print(np.vstack(f.getMap()))
-
+            #
             # print('try range extension (n): ', n)
 
             out = findCandidates(m, n, H, G, f)
@@ -638,15 +643,16 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
                     fp.extend([newNode])
                     fp.setMult(f.getMult())
 
-                    # print('called')
-                    call2 = call + 1
-                    iso = isomorphicExtensions(fp, H, G, call2, M)
-                    # print('returned')
+                    if (checkSBCFunction(f, M)):
+                        # print('called')
+                        call2 = call + 1
+                        iso = isomorphicExtensions(fp, H, G, call2, M)
+                        # print('returned')
 
-                    if(type(iso) == type(fp)):
-                        isomorphisms.append(iso)
-                    else:
-                        [isomorphisms.append(i) for i in iso]
+                        if(type(iso) == type(fp)):
+                            isomorphisms.append(iso)
+                        else:
+                            [isomorphisms.append(i) for i in iso]
 
                 else:
                     # print('failed SBC')
@@ -665,6 +671,7 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
     #     print('   ',end='')
     # print('output: ',end='')
 
+    # print('output: ')
     # print([tuple(k.getMap()) for k in isomorphisms])
 
     return isomorphisms

@@ -1,1 +1,0 @@
-query graph: [[0,1],[0,2],[0,3],[3,4],[3,5]], network: colinet1.1 , subtrees: 301.33719992637634, regular: 1040.527421951294

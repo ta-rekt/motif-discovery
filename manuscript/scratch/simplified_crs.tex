@@ -1,0 +1,40 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+\usepackage{amsfonts}								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+\usepackage{amsmath}
+%SetFonts
+
+%SetFonts
+
+
+\title{}
+\author{}
+%\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+If $B = (R,L)$ is a weighted bipartite graph with adjacency matrix $M$ and having the following properties:
+\begin{itemize}
+	\item{$\forall u \in S, S \subseteq R,$ deg($v$) = $|L|$}
+	\item{$\forall u \in S, \forall v \in L, w((u,v)) = 1$}
+\end{itemize}
+
+then per($M$) = per($M'$) $\times \binom{|L| - |R|\setminus|S|}{|S|}$, where $M'$ is the adjacency matrix of the subgraph of $B$ induced on all vertices adjacent to edges of weight $\geq$ 1.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=14cm]{simplified_crs_1.jpeg}
+	\caption{}
+\end{figure}
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=14cm]{simplified_crs_2.jpeg}
+	\caption{}
+\end{figure}
+
+\end{document}  
