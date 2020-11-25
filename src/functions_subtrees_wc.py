@@ -10,6 +10,7 @@ import collections as co
 import random as rnd
 import permanent_fast as per_f
 import operator
+import copy
 from operator import mul
 import itertools as it
 from itertools import groupby
@@ -604,7 +605,17 @@ def findSubgraphInstances(strH, strG):
                                             nx.set_node_attributes(G, marks_G, 'marked')
 
                                             # print('f before isoext:', f.getMap())
-                                            iso = fnr_wc.isomorphicExtensions(f, B, G, 0, M)
+                                            N = copy.deepcopy(M)
+
+                                            for key in M.keys():
+                                                for val in M[key]:
+                                                    if (val not in B):
+                                                        N[key].remove(val)
+
+                                                if (key not in B):
+                                                    del N[key]
+
+                                            iso = fnr_wc.isomorphicExtensions(f, B, G, 0, N)
 
                                             for s in S:
                                                 if (s != g):
@@ -620,7 +631,7 @@ def findSubgraphInstances(strH, strG):
                                                 for i in iso:
                                                     instances.append(i)
 
-                                            print('instances:', [[tuple(x.getMap()), x.getMult()] for x in instances])
+                                            # print('instances:', [[tuple(x.getMap()), x.getMult()] for x in instances])
 
                 for s in S.nodes():
                     if (G.nodes[s]['coreness'] == 1):

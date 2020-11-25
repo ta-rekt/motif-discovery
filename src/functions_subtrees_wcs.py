@@ -15,6 +15,7 @@ import itertools as it
 from itertools import groupby
 import functions_regular_wc as fnr_wc
 import math
+import scipy.special as sp
 
 count = 0
 
@@ -604,7 +605,17 @@ def findSubgraphInstances(strH, strG):
                                             nx.set_node_attributes(G, marks_G, 'marked')
 
                                             # print('f before isoext:', f.getMap())
-                                            iso = fnr_wc.isomorphicExtensions(f, B, G, 0, M)
+                                            N = copy.deepcopy(M)
+
+                                            for key in M.keys():
+                                                for val in M[key]:
+                                                    if (val not in B):
+                                                        N[key].remove(val)
+
+                                                if (key not in B):
+                                                    del N[key]
+
+                                            iso = fnr_wc.isomorphicExtensions(f, B, G, 0, N)
 
                                             for s in S:
                                                 if (s != g):
@@ -995,8 +1006,16 @@ def countMatchings(T, rootT, S, rootS, preorderTree={}, init=True):
     if (init):
         preorderTree = compressTree(T, rootT, rootT)
 
-    preorderChildren = sorted([preorderTree[i] for i in childrenT])
-    classSizes = [len(list(group)) for key, group in groupby(preorderChildren)]
+    treeChildrenT = [child for child in childrenT if preorderTree[child] != '']
+    starChildrenT = [child for child in childrenT if preorderTree[child] == '']
+
+    treeChildrenS = [child for child in childrenS if len(S[child]) > 1]
+
+    preorderTreeChildren = sorted([preorderTree[i] for i in treeChildrenT])
+    classSizes = [len(list(group)) for key, group in groupby(preorderTreeChildren)]
+
+    # print('T', childrenT, treeChildrenT, starChildrenT)
+    # print('S', childrenS, treeChildrenS)
 
     for val in classSizes:
         if (val > 1):
@@ -1006,26 +1025,38 @@ def countMatchings(T, rootT, S, rootS, preorderTree={}, init=True):
     if (not childrenT):
         return 1
 
+    if (len(treeChildrenT) == 0):
+        k_binom = len(childrenT)
+        n_binom = len(childrenS)
+
+        return sp.binom(n_binom, k_binom)
+
+    if (len(treeChildrenT) > len(treeChildrenS)):
+        k_binom = len(starChildrenT)
+        n_binom = len(childrenS)
+
+        return sp.binom(n_binom, k_binom)
+
     if (len(childrenT) > len(childrenS)):
         return 0
 
     indices = {}
     left = set()
 
-    l = len(childrenT)
-    r = len(childrenS)
+    l = len(treeChildrenT)
+    r = len(treeChildrenS)
 
-    for key_i, i in enumerate(childrenT):
-        for key_j, j in enumerate(childrenS):
+    for key_i, i in enumerate(treeChildrenT):
+        for key_j, j in enumerate(treeChildrenS):
             Ti = subtree(T, i, rootT)
             Sj = subtree(S, j, rootS)
 
             k = countMatchings(Ti, i, Sj, j, preorderTree, False)
 
             if (k > 0):
-                G.add_edge(key_i, key_j+len(childrenT), weight = k)
+                G.add_edge(key_i, key_j+len(treeChildrenT), weight = k)
 
-            indices[key_j+len(childrenT)] = str(j) + 'r'
+            indices[key_j+len(treeChildrenT)] = str(j) + 'r'
 
         indices[key_i] = str(i) + 'l'
         left.add(indices[key_i])
@@ -1035,10 +1066,12 @@ def countMatchings(T, rootT, S, rootS, preorderTree={}, init=True):
     mat = nx.to_numpy_matrix(G, [i for i in range(l+r)])
     matchings = rectPermanent(mat, l, r)
 
-    # if (init):  # base call
-        # drawBipartiteGraph(K, left)
+    k_binom = len(starChildrenT)
+    n_binom = len(childrenS) - len(treeChildrenT)
 
-    return matchings / m
+    binomCount = sp.binom(n_binom, k_binom)
+
+    return (matchings / m) * binomCount
 
 
 # recursively find the number of induced subtrees of H's depth-1

@@ -567,8 +567,8 @@ def isomorphicExtensions(f, H, G, call, M = None): # M
 
     if(set(D) == set(H.nodes())):
 
-        for c in range(call):
-            print('   ',end='')
+        # for c in range(call):
+        #     print('   ',end='')
         # print('INSTANCE FOUND ON CALL #', end='')
         # print(call)
 
