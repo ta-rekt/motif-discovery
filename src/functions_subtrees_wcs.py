@@ -1031,13 +1031,7 @@ def countMatchings(T, rootT, S, rootS, preorderTree={}, init=True):
 
         return sp.binom(n_binom, k_binom)
 
-    if (len(treeChildrenT) > len(treeChildrenS)):
-        k_binom = len(starChildrenT)
-        n_binom = len(childrenS)
-
-        return sp.binom(n_binom, k_binom)
-
-    if (len(childrenT) > len(childrenS)):
+    if (len(childrenT) > len(childrenS) or len(treeChildrenT) > len(treeChildrenS)):
         return 0
 
     indices = {}
