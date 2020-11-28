@@ -1,0 +1,8 @@
+python compare_speed_fns_wcs.py 513 4 0 6;
+python compare_speed_fns_wcs.py 372 4 0 6;
+python compare_speed_fns_wcs.py 254 4 0 6;
+python compare_speed_fns_wcs.py 33 4 0 6;
+python compare_speed_fns_wcs.py 471 4 0 6;
+python compare_speed_fns_wcs.py 4 4 0 6;
+python compare_speed_fns_wcs.py 464 4 0 6;
+python compare_speed_fns_wcs.py 503 4 0 6;

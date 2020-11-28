@@ -10,6 +10,7 @@ import collections as co
 import random as rnd
 import permanent_fast as per_f
 import operator
+import copy
 from operator import mul
 import itertools as it
 from itertools import groupby

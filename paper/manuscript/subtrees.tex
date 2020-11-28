@@ -534,12 +534,17 @@ The permanent of an $n \times n$ matrix $A = (a_{ij})$ is defined as
 \begin{equation}\label{eq:permanent}
   per(A) = \sum_{\sigma \in S_n} \prod_{i=1}^{n}a_{i,\sigma(i)}
 \end{equation}
-where $S_n$ is the set of all permutations of the index set. Valiant showed \cite{valiant1979permanent} that the number of matchings of a bipartite graph is equal to the permanent of its (0,1)-adjacency matrix. In a weighed bipartite graph $B$ with an adjacency matrix $M = (m_{ij})$, if we define the weight of a matching $s$ as the product of the weights of all its edges
+where $S_n$ is the set of all permutations of the index set. Valiant showed \cite{valiant1979permanent} that the number of matchings of a bipartite graph is equal to the permanent of its (0,1)-adjacency matrix. In a weighed bipartite graph $B$ with a square adjacency matrix $M = (m_{ij})$, if we define the weight of a matching $s$ as the product of the weights of all its edges
 
 \begin{equation}\label{eq:weighed_bipartite}
   w(s) = \prod_{i=1}m_{i,s(i)}
 \end{equation}
-then the permanent of $M$ is the sum of the weights of all matchings of $B$. If we assign the weight of an edge $(u,v)$ to be the number of matchings between $T_u$ and $S_v$, the permanent of $M$ becomes the total number of instances of $T$ in $S$. We use this fact and the above reduction to propose a subtree-counting algorithm that leverages Ryser's formula for the permanent \cite{ryser1963combinatorial} to achieve drastic speedup when compared with regular motif search algorithms running on trees.
+then the permanent of $M$ is the sum of the weights of all matchings of $B$. If we assign the weight of an edge $(u,v)$ to be the number of matchings between $T_u$ and $S_v$, the permanent of $M$ becomes the total number of instances of $T$ in $S$. In the case where $M$ is rectangular with dimension $m \times n$ where $n \geq m$, $per(M)$ is the sum of the permanents of all $m \times m$ square sub-matrices of $M$.
+
+% this produces n choose k (k by k) matrices. we can shrink the size of the permanent using the following simplification
+If the roots of trees $\{T,S\}$ have $k$ and $n$ children respectively, we need to compute $\binom{n}{k}$ permanents of $(k \times k)$ matrices to count all instances of $T$ in $S$. Hubs that appear in trees can make $\binom{n}{k}$ a very large number, and permanents of $k \times k$ matrices expensive to calculate. Note that these computations happen for every non-leaf vertex of $T$, as we elaborate below. We propose the following simplification to address this issue: \\
+
+%We use this fact and the above reduction to propose a subtree-counting algorithm that leverages Ryser's formula for the permanent \cite{ryser1963combinatorial} to achieve drastic speedup when compared with regular motif search algorithms running on trees. \\
 
 \begin{algorithm}
 \caption{\textsc{CountRootedSubtrees}$(T, S, t, s, D)$}
@@ -695,7 +700,15 @@ f_{gk}(H, G) \leq \frac{1}{|Aut(H)|}\binom{n}{m}
 \label{sec:experiments}
 
 \subsection{Methods}
-We implemented the Grochow-Kellis algorithm and \cref{alg:countsubgraphs} in Python and compared the runtime incurred in counting all undirected graphs up to size $k$.
+We implemented the Grochow-Kellis algorithm and \cref{alg:countsubgraphs} in Python 3.6 and ran them on a set of Intel Xeon E5-2680 v3 processors at 2.50GHz running Red Hat Enterprise Linux 7, from CU Boulder's RMACC supercomputer. Because each motif/network query is a computation that can be run on a separate processor, we made use of concurrency wherever possible. The runtimes we report are expressions of the total time taken for all concurrent processes summed together.
+
+Using data from the communityFitNet corpus
+% citation
+we tested a sample of 8 undirected networks of comparable size (around 150 vertices) spanning different topologies and categories of systems. We took care in our selection to make sure each network's shape was representative of the family of systems which it originated from in the communityFitNet dataset. In each network we searched for all undirected graphs up to size 8 \textbf{see figure}. We related the speedup afforded by our algorithm to the following network statistics: size of the 2-core relative to network size, maximum coreness relative to network size, maximum peripheral hub degree, and width of 1-shell. We identify \textbf{magic statistic 1} and \textbf{magic statistic 2} as the statistics most predictive of a large performance improvement in our algorithm. We follow up by listing a sample of 100 networks from the communityFitNet corpus along with their corresponding \textbf{magic statistic 1} and \textbf{magic statistic 2}, pointing to the potential areas of application of our algorithm. We then tested four networks of around 1000 vertices whose statistics conform to the aforementioned conditions, and demonstrate our algorithm's performance in querying all undirected graphs up to size X, as well as a sample of 10 graphs of sizes Y and Z.
+
+Because our code is written in Python, it was expected that the runtimes are not comparable to those of current state-of-the-art motif algoritms, which often are implemented in faster languages such as Java 
+% grochow-kellis
+and optimized for experimental use. Our aim was to provide a common-platform comparison with a standard motif-centric algorithm from the literature.
 
 \subsection{Results and discussion}
 \label{sec:results}
