@@ -29,6 +29,11 @@
   Faster algorithms for finding and counting subgraphs}, Journal of Computer
   and System Sciences, 78 (2012), pp.~698--706.
 
+\bibitem{ghasemian2017evaluating}
+{\sc A.~Ghasemian, H.~Hosseinmardi, and A.~Clauset}, {\em Evaluating and
+  comparing overfit in models of network community structure}, Preprint,
+  (2017).
+
 \bibitem{goldberg2000counting}
 {\sc L.~A. Goldberg and M.~Jerrum}, {\em Counting unlabelled subtrees of a tree
   is\# p-complete}, LMS Journal of Computation and Mathematics, 3 (2000),
