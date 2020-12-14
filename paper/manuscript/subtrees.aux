@@ -17,6 +17,7 @@
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \citation{strogatz2001exploring,newman2018networks}
+\citation{milo2002network}
 \citation{valverde2005network}
 \citation{sporns2004motifs}
 \citation{shen2002network}
@@ -37,6 +38,7 @@
 \citation{fomin2012faster}
 \citation{alon2008biomolecular}
 \citation{curticapean2014complexity}
+\citation{pinar2017escape}
 \citation{itzkovitz2003subgraphs}
 \citation{barabasi2001deterministic}
 \citation{broido2019scale}
@@ -44,110 +46,125 @@
 \citation{grochow2007network}
 \citation{kong2019k}
 \citation{grochow2007network}
-\citation{valiant1979complexity}
-\newlabel{sec:subtrees}{{2}{3}{Counting subtrees in the $1$-shell}{section.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Organization}{3}{section*.2}}
+\newlabel{sec:subtrees}{{2}{3}{Counting subtrees in the $1$-shell}{section.3}{}}
 \newlabel{sec:subtrees@cref}{{[section][2][]2}{3}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Counting subtrees in the $1$-shell}{3}{section.2}}
-\newlabel{subsec:kcore}{{2.1}{3}{The k-core decomposition}{subsection.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Counting subtrees in the $1$-shell}{3}{section.3}}
+\newlabel{subsec:kcore}{{2.1}{3}{Background on the k-core decomposition}{subsection.4}{}}
 \newlabel{subsec:kcore@cref}{{[subsection][1][2]2.1}{3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}The k-core decomposition}{3}{subsection.3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Complexity of counting subtrees}{3}{subsection.4}}
-\@writefile{thm}{\contentsline {theorem}{{Theorem}{2.1}{}}{3}{theorem.7}}
-\newlabel{thm:subtree_count}{{2.1}{3}{Complexity of counting subtrees}{theorem.7}{}}
-\newlabel{thm:subtree_count@cref}{{[theorem][1][2]2.1}{3}}
-\@writefile{thm}{\contentsline {proof}{{Proof}{1}{}}{3}{proof.8}}
-\citation{goldberg2000counting}
-\newlabel{fig:equiv_example}{{1}{4}{Complexity of counting subtrees}{figure.5}{}}
-\newlabel{fig:equiv_example@cref}{{[figure][1][]1}{4}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Graphical example of equivalence \cref  {eq:bipartite_equiv}.}}{4}{figure.5}}
-\newlabel{eq:bipartite_equiv}{{2.1}{4}{Complexity of counting subtrees}{equation.9}{}}
-\newlabel{eq:bipartite_equiv@cref}{{[equation][1][2]2.1}{4}}
-\citation{valiant1979permanent}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Description of the subtree-counting algorithm}{5}{subsection.10}}
-\newlabel{eq:permanent}{{2.2}{5}{Description of the subtree-counting algorithm}{equation.11}{}}
-\newlabel{eq:permanent@cref}{{[equation][2][2]2.2}{5}}
-\newlabel{eq:weighed_bipartite}{{2.3}{5}{Description of the subtree-counting algorithm}{equation.12}{}}
-\newlabel{eq:weighed_bipartite@cref}{{[equation][3][2]2.3}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Background on the k-core decomposition}{3}{subsection.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Description of the subtree-counting algorithm}{3}{subsection.5}}
+\newlabel{eq:permanent}{{2.1}{3}{Description of the subtree-counting algorithm}{equation.6}{}}
+\newlabel{eq:permanent@cref}{{[equation][1][2]2.1}{3}}
 \citation{ryser1963combinatorial}
+\newlabel{eq:weighed_bipartite}{{2.2}{4}{Description of the subtree-counting algorithm}{equation.7}{}}
+\newlabel{eq:weighed_bipartite@cref}{{[equation][2][2]2.2}{4}}
+\@writefile{thm}{\contentsline {lemma}{{Lemma}{2.1}{}}{4}{theorem.8}}
+\newlabel{lem:simplified_per}{{2.1}{4}{Description of the subtree-counting algorithm}{theorem.8}{}}
+\newlabel{lem:simplified_per@cref}{{[lemma][1][2]2.1}{4}}
+\@writefile{thm}{\contentsline {proof}{{Proof}{1}{}}{4}{proof.10}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2.1}{\ignorespaces \textsc  {CountRootedSubtrees}$(T, S, t, s, D)$}}{5}{algorithm.12}}
+\newlabel{alg:buildtree}{{2.1}{5}{Description of the subtree-counting algorithm}{algorithm.12}{}}
+\newlabel{alg:buildtree@cref}{{[algorithm][1][2]2.1}{5}}
+\citation{ryser1963combinatorial}
+\citation{arora2009computational}
+\citation{arora2009computational}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Complexity of counting subtrees}{6}{subsection.45}}
+\@writefile{thm}{\contentsline {definition}{{Definition}{2.2}{}}{6}{theorem.46}}
 \citation{grochow2007network}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {2.1}{\ignorespaces \textsc  {CountRootedSubtrees}$(T, S, t, s, D)$}}{6}{algorithm.13}}
-\newlabel{alg:buildtree}{{2.1}{6}{Description of the subtree-counting algorithm}{algorithm.13}{}}
-\newlabel{alg:buildtree@cref}{{[algorithm][1][2]2.1}{6}}
-\newlabel{sec:main}{{3}{6}{The subgraph-counting algorithm}{section.33}{}}
-\newlabel{sec:main@cref}{{[section][3][]3}{6}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}The subgraph-counting algorithm}{6}{section.33}}
-\newlabel{sec:boundary}{{3.1}{6}{Boundary conditions}{subsection.34}{}}
-\newlabel{sec:boundary@cref}{{[subsection][1][3]3.1}{6}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Boundary conditions}{6}{subsection.34}}
+\newlabel{fig:equiv_example}{{1}{7}{Complexity of counting subtrees}{figure.48}{}}
+\newlabel{fig:equiv_example@cref}{{[figure][1][]1}{7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Graphical example of equivalence \cref  {eq:bipartite_equiv}.}}{7}{figure.48}}
+\@writefile{thm}{\contentsline {theorem}{{Theorem}{2.3}{}}{7}{theorem.50}}
+\newlabel{thm:subtree_count}{{2.3}{7}{Complexity of counting subtrees}{theorem.50}{}}
+\newlabel{thm:subtree_count@cref}{{[theorem][3][2]2.3}{7}}
+\@writefile{thm}{\contentsline {proof}{{Proof}{2}{}}{7}{proof.51}}
+\newlabel{eq:bipartite_equiv}{{2.7}{7}{Complexity of counting subtrees}{equation.52}{}}
+\newlabel{eq:bipartite_equiv@cref}{{[equation][7][2]2.7}{7}}
+\citation{valiant1979permanent}
+\citation{goldberg2000counting}
+\citation{grochow2007network}
+\newlabel{sec:main}{{3}{8}{The subgraph-counting algorithm}{section.55}{}}
+\newlabel{sec:main@cref}{{[section][3][]3}{8}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}The subgraph-counting algorithm}{8}{section.55}}
+\newlabel{sec:boundary}{{3.1}{8}{Boundary conditions}{subsection.56}{}}
+\newlabel{sec:boundary@cref}{{[subsection][1][3]3.1}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Boundary conditions}{8}{subsection.56}}
 \citation{grochow2007network}
 \citation{grochow2007network}
 \citation{grochow2007network}
-\@writefile{thm}{\contentsline {definition}{{Definition}{3.1}{}}{7}{theorem.35}}
-\newlabel{def:induced_iso}{{3.1}{7}{Boundary conditions}{theorem.35}{}}
-\newlabel{def:induced_iso@cref}{{[definition][1][3]3.1}{7}}
-\@writefile{thm}{\contentsline {theorem}{{Theorem}{3.2}{}}{7}{theorem.37}}
-\newlabel{thm:early_abort}{{3.2}{7}{Boundary conditions}{theorem.37}{}}
-\newlabel{thm:early_abort@cref}{{[theorem][2][3]3.2}{7}}
-\@writefile{thm}{\contentsline {proof}{{Proof}{2}{}}{7}{proof.38}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Main result}{7}{subsection.39}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {3.1}{\ignorespaces \textsc  {CountSubgraphs}$(H, G)$}}{8}{algorithm.40}}
-\newlabel{alg:countsubgraphs}{{3.1}{8}{Main result}{algorithm.40}{}}
-\newlabel{alg:countsubgraphs@cref}{{[algorithm][1][3]3.1}{8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Upper bounds on runtime}{9}{subsection.83}}
+\@writefile{thm}{\contentsline {definition}{{Definition}{3.1}{}}{9}{theorem.57}}
+\newlabel{def:induced_iso}{{3.1}{9}{Boundary conditions}{theorem.57}{}}
+\newlabel{def:induced_iso@cref}{{[definition][1][3]3.1}{9}}
+\@writefile{thm}{\contentsline {theorem}{{Theorem}{3.2}{}}{9}{theorem.59}}
+\newlabel{thm:early_abort}{{3.2}{9}{Boundary conditions}{theorem.59}{}}
+\newlabel{thm:early_abort@cref}{{[theorem][2][3]3.2}{9}}
+\@writefile{thm}{\contentsline {proof}{{Proof}{3}{}}{9}{proof.60}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Main result}{9}{subsection.61}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3.1}{\ignorespaces \textsc  {CountSubgraphs}$(H, G)$}}{10}{algorithm.62}}
+\newlabel{alg:countsubgraphs}{{3.1}{10}{Main result}{algorithm.62}{}}
+\newlabel{alg:countsubgraphs@cref}{{[algorithm][1][3]3.1}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Upper bounds on runtime}{11}{subsection.105}}
+\newlabel{eq:subtrees_upperbound}{{3.2}{11}{Upper bounds on runtime}{equation.106}{}}
+\newlabel{eq:subtrees_upperbound@cref}{{[equation][2][3]3.2}{11}}
+\newlabel{eq:gk_upperbound}{{3.3}{11}{Upper bounds on runtime}{equation.107}{}}
+\newlabel{eq:gk_upperbound@cref}{{[equation][3][3]3.3}{11}}
+\newlabel{eq:coreness_upperbound}{{3.4}{11}{Upper bounds on runtime}{equation.108}{}}
+\newlabel{eq:coreness_upperbound@cref}{{[equation][4][3]3.4}{11}}
 \citation{ghasemian2017evaluating}
 \citation{grochow2007network}
 \citation{ribeiro2014g}
-\citation{grochow2007network}
-\citation{ribeiro2014g}
-\citation{grochow2007network}
-\citation{ribeiro2014g}
-\citation{grochow2007network}
-\citation{ribeiro2014g}
-\newlabel{sec:experiments}{{4}{10}{Real-data experiments}{section.88}{}}
-\newlabel{sec:experiments@cref}{{[section][4][]4}{10}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Real-data experiments}{10}{section.88}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Methods}{10}{subsection.89}}
-\newlabel{sec:results}{{4.2}{10}{Results and discussion}{subsection.90}{}}
-\newlabel{sec:results@cref}{{[subsection][2][4]4.2}{10}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Results and discussion}{10}{subsection.90}}
-\newlabel{fig:runtime_comparison}{{2}{12}{Results and discussion}{figure.91}{}}
-\newlabel{fig:runtime_comparison@cref}{{[figure][2][]2}{12}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces }}{12}{figure.91}}
+\newlabel{sec:experiments}{{4}{12}{Real-data experiments}{section.110}{}}
+\newlabel{sec:experiments@cref}{{[section][4][]4}{12}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Real-data experiments}{12}{section.110}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Methods}{12}{subsection.111}}
+\newlabel{sec:discussion}{{4.2}{12}{Results and discussion}{subsection.112}{}}
+\newlabel{sec:discussion@cref}{{[subsection][2][4]4.2}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Results and discussion}{12}{subsection.112}}
+\citation{hebert2016multi}
+\citation{hebert2016multi}
+\newlabel{fig:runtime_comparison}{{2}{14}{Results and discussion}{figure.113}{}}
+\newlabel{fig:runtime_comparison@cref}{{[figure][2][]2}{14}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces The first column shows each network from our sample. In the second column, \emph  {max periph. hub degree} is the maximum degree of any vertex in the trees of the 1-shell, including their roots. The ``degree" of the root is taken as the number of adjacent vertices in the 1-shell. The third column shows the onion spectrum \cite  {hebert2016multi} of each network, adn the last column shows a runtime comparison between our algorithm and the Grochow-Kellis symmetry-breaking algorithm.}}{14}{figure.113}}
 \bibstyle{siamplain}
 \bibdata{references}
 \bibcite{albert2004conserved}{1}
 \bibcite{alon2008biomolecular}{2}
-\bibcite{barabasi2001deterministic}{3}
-\bibcite{broido2019scale}{4}
-\bibcite{curticapean2014complexity}{5}
-\bibcite{fomin2012faster}{6}
-\bibcite{ghasemian2017evaluating}{7}
-\bibcite{goldberg2000counting}{8}
-\bibcite{grochow2007network}{9}
-\bibcite{itzkovitz2005coarse}{10}
-\bibcite{itzkovitz2003subgraphs}{11}
-\bibcite{kashani2009kavosh}{12}
-\bibcite{kashtan2004efficient}{13}
-\bibcite{kong2019k}{14}
-\bibcite{li2018mtmo}{15}
-\bibcite{lin2016network}{16}
-\bibcite{milo2002network}{17}
-\bibcite{newman2018networks}{18}
-\bibcite{ohnishi2010network}{19}
-\bibcite{omidi2009moda}{20}
-\bibcite{paulau2015motif}{21}
-\bibcite{prvzulj2004modeling}{22}
-\bibcite{ribeiro2010g}{23}
-\bibcite{ribeiro2014g}{24}
-\bibcite{ryser1963combinatorial}{25}
-\newlabel{sec:conclusion}{{5}{13}{Conclusion}{section.93}{}}
-\newlabel{sec:conclusion@cref}{{[section][5][]5}{13}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{13}{section.93}}
-\bibcite{shao2014parallel}{26}
-\bibcite{shen2002network}{27}
-\bibcite{sporns2004motifs}{28}
-\bibcite{strogatz2001exploring}{29}
-\bibcite{valiant1979permanent}{30}
-\bibcite{valiant1979complexity}{31}
-\bibcite{valverde2005network}{32}
-\bibcite{wernicke2006fanmod}{33}
+\bibcite{arora2009computational}{3}
+\bibcite{barabasi2001deterministic}{4}
+\bibcite{broido2019scale}{5}
+\bibcite{curticapean2014complexity}{6}
+\bibcite{fomin2012faster}{7}
+\newlabel{fig:lsample_comparison}{{3}{15}{Results and discussion}{figure.115}{}}
+\newlabel{fig:lsample_comparison@cref}{{[figure][3][]3}{15}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces }}{15}{figure.115}}
+\newlabel{sec:conclusion}{{5}{15}{Conclusion}{section.117}{}}
+\newlabel{sec:conclusion@cref}{{[section][5][]5}{15}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{15}{section.117}}
+\bibcite{ghasemian2017evaluating}{8}
+\bibcite{goldberg2000counting}{9}
+\bibcite{grochow2007network}{10}
+\bibcite{hebert2016multi}{11}
+\bibcite{itzkovitz2005coarse}{12}
+\bibcite{itzkovitz2003subgraphs}{13}
+\bibcite{kashani2009kavosh}{14}
+\bibcite{kashtan2004efficient}{15}
+\bibcite{kong2019k}{16}
+\bibcite{li2018mtmo}{17}
+\bibcite{lin2016network}{18}
+\bibcite{milo2002network}{19}
+\bibcite{newman2018networks}{20}
+\bibcite{ohnishi2010network}{21}
+\bibcite{omidi2009moda}{22}
+\bibcite{paulau2015motif}{23}
+\bibcite{pinar2017escape}{24}
+\bibcite{prvzulj2004modeling}{25}
+\bibcite{ribeiro2010g}{26}
+\bibcite{ribeiro2014g}{27}
+\bibcite{ryser1963combinatorial}{28}
+\bibcite{shao2014parallel}{29}
+\bibcite{shen2002network}{30}
+\bibcite{sporns2004motifs}{31}
+\bibcite{strogatz2001exploring}{32}
+\bibcite{valverde2005network}{33}
+\bibcite{wernicke2006fanmod}{34}

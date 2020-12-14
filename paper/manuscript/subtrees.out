@@ -1,13 +1,13 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
-\BOOKMARK [1][-]{section.2}{Counting subtrees in the 1-shell}{}% 2
-\BOOKMARK [2][-]{subsection.3}{The k-core decomposition}{section.2}% 3
-\BOOKMARK [2][-]{subsection.4}{Complexity of counting subtrees}{section.2}% 4
-\BOOKMARK [2][-]{subsection.10}{Description of the subtree-counting algorithm}{section.2}% 5
-\BOOKMARK [1][-]{section.33}{The subgraph-counting algorithm}{}% 6
-\BOOKMARK [2][-]{subsection.34}{Boundary conditions}{section.33}% 7
-\BOOKMARK [2][-]{subsection.39}{Main result}{section.33}% 8
-\BOOKMARK [2][-]{subsection.83}{Upper bounds on runtime}{section.33}% 9
-\BOOKMARK [1][-]{section.88}{Real-data experiments}{}% 10
-\BOOKMARK [2][-]{subsection.89}{Methods}{section.88}% 11
-\BOOKMARK [2][-]{subsection.90}{Results and discussion}{section.88}% 12
-\BOOKMARK [1][-]{section.93}{Conclusion}{}% 13
+\BOOKMARK [1][-]{section.3}{Counting subtrees in the 1-shell}{}% 2
+\BOOKMARK [2][-]{subsection.4}{Background on the k-core decomposition}{section.3}% 3
+\BOOKMARK [2][-]{subsection.5}{Description of the subtree-counting algorithm}{section.3}% 4
+\BOOKMARK [2][-]{subsection.45}{Complexity of counting subtrees}{section.3}% 5
+\BOOKMARK [1][-]{section.55}{The subgraph-counting algorithm}{}% 6
+\BOOKMARK [2][-]{subsection.56}{Boundary conditions}{section.55}% 7
+\BOOKMARK [2][-]{subsection.61}{Main result}{section.55}% 8
+\BOOKMARK [2][-]{subsection.105}{Upper bounds on runtime}{section.55}% 9
+\BOOKMARK [1][-]{section.110}{Real-data experiments}{}% 10
+\BOOKMARK [2][-]{subsection.111}{Methods}{section.110}% 11
+\BOOKMARK [2][-]{subsection.112}{Results and discussion}{section.110}% 12
+\BOOKMARK [1][-]{section.117}{Conclusion}{}% 13

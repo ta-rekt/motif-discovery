@@ -10,6 +10,10 @@
   {\em Biomolecular network motif counting and discovery by color coding},
   Bioinformatics, 24 (2008), pp.~i241--i249.
 
+\bibitem{arora2009computational}
+{\sc S.~Arora and B.~Barak}, {\em Computational complexity: a modern approach},
+  Cambridge University Press, 2009.
+
 \bibitem{barabasi2001deterministic}
 {\sc A.-L. Barab{\'a}si, E.~Ravasz, and T.~Vicsek}, {\em Deterministic
   scale-free networks}, Physica A: Statistical Mechanics and its Applications,
@@ -43,6 +47,11 @@
 {\sc J.~A. Grochow and M.~Kellis}, {\em Network motif discovery using subgraph
   enumeration and symmetry-breaking}, in Annual International Conference on
   Research in Computational Molecular Biology, Springer, 2007, pp.~92--106.
+
+\bibitem{hebert2016multi}
+{\sc L.~H{\'e}bert-Dufresne, J.~A. Grochow, and A.~Allard}, {\em Multi-scale
+  structure and topological anomaly detection via a new network statistic: The
+  onion decomposition}, Scientific reports, 6 (2016), p.~31708.
 
 \bibitem{itzkovitz2005coarse}
 {\sc S.~Itzkovitz, R.~Levitt, N.~Kashtan, R.~Milo, M.~Itzkovitz, and U.~Alon},
@@ -101,6 +110,11 @@
   directed ordered networks and applications to food webs}, Scientific reports,
   5 (2015), p.~11926.
 
+\bibitem{pinar2017escape}
+{\sc A.~Pinar, C.~Seshadhri, and V.~Vishal}, {\em Escape: Efficiently counting
+  all 5-vertex subgraphs}, in Proceedings of the 26th International Conference
+  on World Wide Web, 2017, pp.~1431--1440.
+
 \bibitem{prvzulj2004modeling}
 {\sc N.~Pr{\v{z}}ulj, D.~G. Corneil, and I.~Jurisica}, {\em Modeling
   interactome: scale-free or geometric?}, Bioinformatics, 20 (2004),
@@ -137,14 +151,6 @@
 \bibitem{strogatz2001exploring}
 {\sc S.~Strogatz}, {\em Exploring complex networks}, nature, 410 (2001),
   pp.~268--276.
-
-\bibitem{valiant1979permanent}
-{\sc L.~G. Valiant}, {\em The complexity of computing the permanent},
-  Theoretical computer science, 8 (1979), pp.~189--201.
-
-\bibitem{valiant1979complexity}
-{\sc L.~G. Valiant}, {\em The complexity of enumeration and reliability
-  problems}, SIAM Journal on Computing, 8 (1979), pp.~410--421.
 
 \bibitem{valverde2005network}
 {\sc S.~Valverde and R.~V. Sol{\'e}}, {\em Network motifs in computational
